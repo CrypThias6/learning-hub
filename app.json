@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "World Geo Game",
+    "slug": "world-geo-game",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "worldgeogame",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.matt.worldgeogame",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Map display only; location is not required to play."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1220",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.matt.worldgeogame",
+      "permissions": []
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "name": "World Geo Game",
+      "shortName": "World Geo",
+      "lang": "en",
+      "themeColor": "#0B1220",
+      "backgroundColor": "#0B1220",
+      "display": "standalone",
+      "orientation": "portrait",
+      "barStyle": "black-translucent",
+      "description": "Learn world capitals, cities, and facts."
+    },
+    "plugins": [
+      "expo-status-bar"
+    ],
+    "experiments": {
+      "baseUrl": "/learning-hub"
+    }
+  }
+}

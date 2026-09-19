@@ -1,0 +1,40 @@
+{
+  "name": "world-geo-game",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@expo/metro-runtime": "~57.0.16",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "^57.0.0",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-maps": "1.27.2",
+    "react-native-reanimated": "4.5.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-web": "^0.21.2",
+    "react-native-worklets": "0.10.1"
+  },
+  "devDependencies": {
+    "@expo/ngrok": "^4.1.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "~19.2.4",
+    "babel-preset-expo": "~57.0.0",
+    "qrcode": "^1.5.4",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "start:tunnel": "expo start --tunnel --go",
+    "start:lan": "expo start --lan --go --port 8081",
+    "web:export": "expo export -p web --output-dir dist",
+    "web:serve": "node scripts/serve-web-with-flags.js"
+  },
+  "private": true,
+  "homepage": "https://CrypThias6.github.io/learning-hub"
+}

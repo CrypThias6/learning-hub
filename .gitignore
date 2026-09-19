@@ -1,0 +1,18 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+.DS_Store
+npm-debug.*
+*.log
+.env
+.env.*
+# Decoded from *.png.b64 in CI; keep binaries out of git if only b64 is committed
+assets/*.png
+!assets/*.png.b64
