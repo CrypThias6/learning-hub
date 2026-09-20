@@ -23,6 +23,7 @@ export default function App() {
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
   const gameInProgress = !finished && (index > 0 || score > 0);
+  const hasQuestions = QUESTIONS.length > 0;
 
   const current = QUESTIONS[index];
   const leaderboard = useMemo(
@@ -31,6 +32,7 @@ export default function App() {
   );
 
   const answer = (choice: string) => {
+    if (!hasQuestions || !current) return;
     const nextScore = score + (choice === current.correct ? 1 : 0);
     if (index === QUESTIONS.length - 1) {
       setScore(nextScore);
@@ -79,7 +81,11 @@ export default function App() {
           ))}
         </View>
 
-        {!finished ? (
+        {!hasQuestions ? (
+          <View style={styles.quiz}>
+            <Text style={styles.question}>No quiz data available.</Text>
+          </View>
+        ) : !finished ? (
           <View style={styles.quiz}>
             <Text style={styles.progress}>
               {index + 1}/{QUESTIONS.length} • Score {score}
