@@ -14,14 +14,40 @@
     }
     return out;
   }
+  function loadName(name) {
+    // Prefer verified 2KB shards when present: name.s0 .. name.s5
+    return fetch(base + name + ".s0", { cache: "force-cache" }).then(function (r0) {
+      if (r0.ok) {
+        return r0.text().then(function (t0) {
+          var acc = [t0.replace(/\s+/g, "")];
+          var p = Promise.resolve();
+          for (var s = 1; s <= 5; s++) {
+            (function (s) {
+              p = p.then(function () {
+                return fetch(base + name + ".s" + s, { cache: "force-cache" })
+                  .then(function (r) {
+                    if (!r.ok) throw new Error("missing shard " + name + ".s" + s);
+                    return r.text();
+                  })
+                  .then(function (t) { acc.push(t.replace(/\s+/g, "")); });
+              });
+            })(s);
+          }
+          return p.then(function () { return acc.join(""); });
+        });
+      }
+      return fetch(base + name, { cache: "force-cache" }).then(function (r) {
+        if (!r.ok) throw new Error("missing " + name + " (" + r.status + ")");
+        return r.text();
+      }).then(function (t) { return t.replace(/\s+/g, ""); });
+    });
+  }
   fetch(base + "chunks.json", { cache: "no-store" })
     .then(function (r) { return r.json(); })
     .then(function (names) {
       return names.reduce(function (p, name) {
         return p.then(function (acc) {
-          return fetch(base + name, { cache: "force-cache" })
-            .then(function (r) { return r.text(); })
-            .then(function (t) { acc.push(t.replace(/\s+/g, "")); return acc; });
+          return loadName(name).then(function (t) { acc.push(t); return acc; });
         });
       }, Promise.resolve([]));
     })
