@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -70,6 +70,29 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+
+      - name: Publish dist to gh-pages branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Clone gh-pages into a sibling dir and replace contents with dist
+          WORK=$(mktemp -d)
+          git clone --depth 1 --branch gh-pages "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$WORK"
+          # Remove old site files but keep .git
+          find "$WORK" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          cp -a dist/. "$WORK"/
+          touch "$WORK/.nojekyll"
+          cd "$WORK"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to publish to gh-pages"
+          else
+            git commit -m "Deploy expo web export from main ${GITHUB_SHA}"
+            git push origin gh-pages
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     needs: build
