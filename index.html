@@ -14,54 +14,89 @@
       html { height: 100%; background-color: var(--app-bg); color-scheme: dark; }
       html, body { margin: 0; padding: 0; width: 100%; overflow: hidden; background-color: var(--app-bg); position: fixed; inset: 0; }
       #root { display: flex; flex: 1; width: 100%; height: 100%; background-color: var(--app-bg); }
-      #dev-hotspot {
-        position: fixed; right: 0; bottom: 0; width: 44px; height: 44px; z-index: 9998;
-        background: transparent; border: 0; padding: 0;
+      #dev-open {
+        position: fixed; right: 10px; bottom: 10px; z-index: 9998;
+        background: #22334d; color: #9bb0c9; border: 1px solid #3D5A80;
+        border-radius: 999px; padding: 8px 12px; font: 700 12px system-ui, sans-serif;
       }
-      #dev-panel {
+      #dev-panel, #dev-lock {
         display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
         z-index: 9999; width: min(92vw, 360px); background: #152238; color: #fff;
         border: 1px solid #3D5A80; border-radius: 16px; padding: 16px; font-family: system-ui, sans-serif;
       }
-      #dev-panel h2 { margin: 0 0 8px; font-size: 18px; }
-      #dev-panel p { margin: 0 0 14px; color: #9bb0c9; font-size: 13px; line-height: 1.4; }
-      #dev-panel button { width: 100%; margin: 0 0 8px; padding: 12px; border-radius: 10px; border: 0; font-weight: 700; }
+      #dev-panel h2, #dev-lock h2 { margin: 0 0 8px; font-size: 18px; }
+      #dev-panel p, #dev-lock p { margin: 0 0 14px; color: #9bb0c9; font-size: 13px; line-height: 1.4; }
+      #dev-lock input {
+        width: 100%; box-sizing: border-box; margin: 0 0 10px; padding: 12px;
+        border-radius: 10px; border: 1px solid #3D5A80; background: #0B1220; color: #fff;
+        font-size: 18px; letter-spacing: 4px; text-align: center;
+      }
+      #dev-panel button, #dev-lock button { width: 100%; margin: 0 0 8px; padding: 12px; border-radius: 10px; border: 0; font-weight: 700; }
+      #dev-reset, #dev-unlock { background: #3DB8A8; color: #06201C; }
       #dev-reset { background: #c44; color: #fff; }
-      #dev-close { background: #22334d; color: #d6e4f5; }
+      #dev-close, #dev-cancel { background: #22334d; color: #d6e4f5; }
+      #dev-error { color: #ff8a8a; min-height: 18px; margin: 0 0 8px; font-size: 13px; }
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <button id="dev-hotspot" type="button" aria-label="Dev"></button>
+    <button id="dev-open" type="button">Dev settings</button>
+    <div id="dev-lock">
+      <h2>Dev settings</h2>
+      <p>Enter the passcode to continue.</p>
+      <input id="dev-code" type="password" inputmode="numeric" maxlength="8" autocomplete="off" />
+      <p id="dev-error"></p>
+      <button id="dev-unlock" type="button">Open</button>
+      <button id="dev-cancel" type="button">Cancel</button>
+    </div>
     <div id="dev-panel">
       <h2>Dev settings</h2>
-      <p>Hidden on purpose. Reset person unlocks Who are you? on this device only. Scores stay.</p>
+      <p>Reset person unlocks Who are you? on this device only. Scores stay.</p>
       <button id="dev-reset" type="button">Reset person</button>
       <button id="dev-close" type="button">Close</button>
     </div>
     <script>
       (function () {
-        var taps = 0, timer = null, panel = document.getElementById('dev-panel');
-        document.getElementById('dev-hotspot').addEventListener('click', function () {
-          taps += 1;
-          clearTimeout(timer);
-          timer = setTimeout(function () { taps = 0; }, 1600);
-          if (taps >= 7) {
-            taps = 0;
+        var PASS = '247';
+        var lock = document.getElementById('dev-lock');
+        var panel = document.getElementById('dev-panel');
+        var code = document.getElementById('dev-code');
+        var err = document.getElementById('dev-error');
+        function hideAll() {
+          lock.style.display = 'none';
+          panel.style.display = 'none';
+          code.value = '';
+          err.textContent = '';
+        }
+        document.getElementById('dev-open').addEventListener('click', function () {
+          err.textContent = '';
+          code.value = '';
+          lock.style.display = 'block';
+          panel.style.display = 'none';
+          setTimeout(function () { code.focus(); }, 50);
+        });
+        document.getElementById('dev-cancel').addEventListener('click', hideAll);
+        document.getElementById('dev-close').addEventListener('click', hideAll);
+        document.getElementById('dev-unlock').addEventListener('click', function () {
+          if (String(code.value).trim() === PASS) {
+            lock.style.display = 'none';
             panel.style.display = 'block';
+            code.value = '';
+            err.textContent = '';
+          } else {
+            err.textContent = 'Wrong passcode';
+            code.value = '';
+            code.focus();
           }
         });
-        document.getElementById('dev-close').addEventListener('click', function () {
-          panel.style.display = 'none';
+        code.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') document.getElementById('dev-unlock').click();
         });
         document.getElementById('dev-reset').addEventListener('click', function () {
           if (!confirm('Reset person on this device? Who are you? will show again. Scores stay.')) return;
-          var keys = ['@wgg/selectedFamily'];
           try {
-            keys.forEach(function (k) {
-              localStorage.removeItem(k);
-              sessionStorage.removeItem(k);
-            });
+            localStorage.removeItem('@wgg/selectedFamily');
+            sessionStorage.removeItem('@wgg/selectedFamily');
             Object.keys(localStorage).forEach(function (k) {
               if (k.indexOf('selectedFamily') !== -1) localStorage.removeItem(k);
             });
