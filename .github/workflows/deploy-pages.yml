@@ -18,20 +18,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Decode or generate binary assets
+      - name: Restore assets
         run: |
           set -euo pipefail
-          mkdir -p assets
-          shopt -s nullglob
-          for b64 in assets/*.png.b64; do
-            out="${b64%.b64}"
-            base64 -d "$b64" > "$out"
-            echo "Decoded $b64 -> $out"
-          done
-          python3 << 'PY'
+          mkdir -p assets/data
+          restore_gz() {
+            local prefix="$1" out="$2"
+            local man="assets/data/${prefix}.manifest"
+            if [ -f "$man" ]; then
+              parts=$(tr '\n' ' ' < "$man")
+              (cd assets/data && cat $parts) | base64 -d | gzip -d > "$out"
+              echo "Restored $out ($(wc -c < "$out") bytes)"
+            fi
+          }
+          restore_gz world_geo_game.json.gz.b64 assets/data/world_geo_game.json
+          restore_gz horse_quiz.json.gz.b64 assets/data/horse_quiz.json
+          if [ -f assets/favicon.png.b64 ]; then base64 -d assets/favicon.png.b64 > assets/favicon.png; fi
+          python3 << 'PY2'
           import struct, zlib, pathlib
           def write_png(path, rgba=(11,18,32,255), size=48):
               path = pathlib.Path(path)
@@ -45,29 +50,24 @@ jobs:
               ihdr = struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)
               png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
               path.write_bytes(png)
-              print(f"Generated placeholder {path} ({len(png)} bytes)")
+              print("Generated", path)
           for name in ["icon.png", "splash-icon.png", "favicon.png",
                        "android-icon-foreground.png", "android-icon-background.png",
                        "android-icon-monochrome.png"]:
               write_png(f"assets/{name}")
-          PY
+          PY2
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Install dependencies
-        run: npm install --no-fund --no-audit
+      - run: npm install --no-fund --no-audit
 
-      - name: Export web build
-        run: npx expo export -p web --output-dir dist
+      - run: npx expo export -p web --output-dir dist
 
-      - name: Add .nojekyll
-        run: touch dist/.nojekyll
+      - run: touch dist/.nojekyll
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
@@ -78,6 +78,5 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
