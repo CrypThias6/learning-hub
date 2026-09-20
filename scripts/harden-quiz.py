@@ -26,7 +26,7 @@ def dec(t):
     try:
         return bytes(t, "utf-8").decode("unicode_escape")
     except Exception:
-        return t.replace("\\u2014", "\u2014").replace("\\u2019", "'").replace("\\u2026", "...")
+        return t
 
 
 def load_fixes():
@@ -62,8 +62,7 @@ def leak(detail, answer):
     return False
 
 
-def safe_detail(qid, question, answer, existing=""):
-    q = dec(question)
+def safe_detail(question, answer, existing=""):
     if existing and not leak(existing, answer):
         return existing
     return (
@@ -73,35 +72,56 @@ def safe_detail(qid, question, answer, existing=""):
     )
 
 
+def shape(s):
+    s = (s or "").strip()
+    if re.fullmatch(r"[0-9]+(?:\s*(?:points?|kg|m|cm|mm|credits?))?", s, re.I):
+        return "num"
+    words = s.split()
+    if len(words) <= 3:
+        return "short"
+    if len(s) >= 28:
+        return "long"
+    return "mid"
+
+
 def similar_pool(ans, pool):
-    al = len(ans)
+    want = shape(ans)
+    al = max(len(ans), 1)
     scored = []
     for p in pool:
-        if p == ans:
+        if not p or p == ans:
             continue
-        if not p:
+        if want == "num" and shape(p) != "num":
             continue
-        scored.append((abs(len(p) - al), -len(p), p))
+        if want == "short" and shape(p) == "long":
+            continue
+        if want == "long" and shape(p) == "num":
+            continue
+        ratio = len(p) / al
+        if ratio < 0.45 or ratio > 2.2:
+            continue
+        scored.append((abs(len(p) - al), p))
     scored.sort()
     out = []
-    for _, __, p in scored:
+    for _, p in scored:
         if p not in out:
             out.append(p)
         if len(out) >= 8:
             break
+    if len(out) < 3:
+        extra = [p for p in pool if p and p != ans and p not in out]
+        extra.sort(key=lambda p: abs(len(p) - al))
+        out.extend(extra)
     return out
 
 
 def patch(src, fix):
-    parsed = []
+    by_cat = {}
     for m in QRE.finditer(src):
         qid, cat, qraw, ch, idx = m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)
         choices = [dec(x) for x in re.findall(r'"((?:\\.|[^"\\])*)"', ch)]
         i = int(idx)
         ans = choices[i] if i < len(choices) else ""
-        parsed.append((qid, cat, ans, choices))
-    by_cat = {}
-    for qid, cat, ans, choices in parsed:
         by_cat.setdefault(cat, []).append(ans)
 
     used_fix = [0]
@@ -118,8 +138,14 @@ def patch(src, fix):
             used_fix[0] += 1
         else:
             pool = similar_pool(ans, by_cat.get(cat, []))
-            # keep any existing wrong that is already long enough
-            existing = [c for i, c in enumerate(old_choices) if i != old_idx and len(c) >= max(8, int(len(ans) * 0.55))]
+            existing = []
+            for i, c in enumerate(old_choices):
+                if i == old_idx:
+                    continue
+                if shape(ans) == "num" and shape(c) != "num":
+                    continue
+                if len(c) >= max(6, int(len(ans) * 0.5)):
+                    existing.append(c)
             wrongs = []
             for c in existing + pool:
                 if c != ans and c not in wrongs:
@@ -127,10 +153,16 @@ def patch(src, fix):
                 if len(wrongs) == 3:
                     break
             while len(wrongs) < 3:
-                wrongs.append(ans + " — nearby idea from the same topic")
-            detail = safe_detail(qid, qraw, ans)
+                pad = {
+                    "num": ["12", "18", "24"][len(wrongs)],
+                    "short": ["Another term from this topic", "A nearby idea in the same field", "A different but related name"][len(wrongs)],
+                    "mid": ["A related idea from the same topic", "A nearby option that does not match the question", "A plausible term from the same field"][len(wrongs)],
+                    "long": ["A detailed but incorrect idea from the same topic", "A plausible description that belongs to a different term", "A related explanation that does not match this question"][len(wrongs)],
+                }[shape(ans)]
+                wrongs.append(pad)
+            detail = ""
             used_auto[0] += 1
-        detail = safe_detail(qid, qraw, ans, detail)
+        detail = safe_detail(qraw, ans, detail if qid in fix else "")
         slot = (sum(ord(c) for c in qid) + old_idx) % 4
         choices = list(wrongs[:3])
         choices.insert(slot, ans)
