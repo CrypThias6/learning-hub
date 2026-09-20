@@ -1,5 +1,10 @@
 (function () {
   var base = "/learning-hub/_expo/static/js/web/";
+  var root = document.getElementById("root");
+  function status(msg) {
+    if (root) root.textContent = msg;
+    console.log(msg);
+  }
   function b64ToU8(b64) {
     var bin = atob(b64);
     var bytes = new Uint8Array(bin.length);
@@ -14,62 +19,40 @@
     }
     return out;
   }
-  function loadName(name) {
-    // Prefer verified 2KB shards when present: name.s0 .. name.s5
-    return fetch(base + name + ".s0", { cache: "force-cache" }).then(function (r0) {
-      if (r0.ok) {
-        return r0.text().then(function (t0) {
-          var acc = [t0.replace(/\s+/g, "")];
-          var p = Promise.resolve();
-          for (var s = 1; s <= 5; s++) {
-            (function (s) {
-              p = p.then(function () {
-                return fetch(base + name + ".s" + s, { cache: "force-cache" })
-                  .then(function (r) {
-                    if (!r.ok) throw new Error("missing shard " + name + ".s" + s);
-                    return r.text();
-                  })
-                  .then(function (t) { acc.push(t.replace(/\s+/g, "")); });
-              });
-            })(s);
-          }
-          return p.then(function () { return acc.join(""); });
-        });
-      }
-      return fetch(base + name, { cache: "force-cache" }).then(function (r) {
-        if (!r.ok) throw new Error("missing " + name + " (" + r.status + ")");
-        return r.text();
-      }).then(function (t) { return t.replace(/\s+/g, ""); });
-    });
-  }
-  fetch(base + "chunks.json", { cache: "no-store" })
-    .then(function (r) { return r.json(); })
+  status("Loading Learning Hub…");
+  fetch(base + "chunks.json?v=live2", { cache: "no-store" })
+    .then(function (r) {
+      if (!r.ok) throw new Error("chunks.json " + r.status);
+      return r.json();
+    })
     .then(function (names) {
-      return names.reduce(function (p, name) {
-        return p.then(function (acc) {
-          return loadName(name).then(function (t) { acc.push(t); return acc; });
-        });
-      }, Promise.resolve([]));
+      return Promise.all(
+        names.map(function (name) {
+          return fetch(base + name + "?v=live2", { cache: "force-cache" }).then(function (r) {
+            if (!r.ok) throw new Error("missing " + name + " (" + r.status + ")");
+            return r.text();
+          });
+        })
+      );
     })
     .then(function (parts) {
-      var bytes = b64ToU8(parts.join(""));
-      if (typeof DecompressionStream === "function") {
-        var ds = new DecompressionStream("gzip");
-        var stream = new Blob([bytes]).stream().pipeThrough(ds);
-        return new Response(stream).arrayBuffer().then(function (ab) {
-          return u8ToBinaryString(new Uint8Array(ab));
-        });
+      var b64 = parts.join("").replace(/\s+/g, "");
+      var bytes = b64ToU8(b64);
+      if (typeof DecompressionStream !== "function") {
+        throw new Error("This browser cannot decompress the app bundle");
       }
-      throw new Error("DecompressionStream not supported");
+      var ds = new DecompressionStream("gzip");
+      var stream = new Blob([bytes]).stream().pipeThrough(ds);
+      return new Response(stream).arrayBuffer();
     })
-    .then(function (code) {
+    .then(function (ab) {
+      var code = u8ToBinaryString(new Uint8Array(ab));
       var s = document.createElement("script");
       s.text = code;
       document.body.appendChild(s);
     })
     .catch(function (err) {
-      var root = document.getElementById("root");
-      if (root) root.textContent = "Failed to load app: " + err;
+      status("Failed to load app: " + err);
       console.error(err);
     });
 })();
