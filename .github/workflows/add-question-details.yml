@@ -17,9 +17,14 @@ jobs:
 
       - name: Fetch patch script from main
         run: |
-          curl -fsSL -o /tmp/p1.py https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts/patch-question-details.py
-          curl -fsSL -o /tmp/p2.py https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts/patch_ui.py
-          cat /tmp/p1.py /tmp/p2.py > /tmp/patch-question-details.py
+          base=https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts
+          curl -fsSL -o /tmp/p1.py $base/patch-question-details.py
+          curl -fsSL -o /tmp/d0.py $base/details_0.py
+          curl -fsSL -o /tmp/d1.py $base/details_1.py
+          curl -fsSL -o /tmp/d2.py $base/details_2.py
+          curl -fsSL -o /tmp/d3.py $base/details_3.py
+          curl -fsSL -o /tmp/p2.py $base/patch_ui.py
+          cat /tmp/p1.py /tmp/d0.py /tmp/d1.py /tmp/d2.py /tmp/d3.py /tmp/p2.py > /tmp/patch-question-details.py
           python3 -m py_compile /tmp/patch-question-details.py
 
       - name: Patch the live JS bundle
@@ -27,12 +32,12 @@ jobs:
           python3 /tmp/patch-question-details.py \
             _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js \
             _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js
-          sed -i 's|index-e692932e42ea2ff98944c1bb62b893a7.js[^"]*|index-e692932e42ea2ff98944c1bb62b893a7.js?v=details5|' index.html
+          sed -i 's|index-e692932e42ea2ff98944c1bb62b893a7.js[^"]*|index-e692932e42ea2ff98944c1bb62b893a7.js?v=details6|' index.html
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js index.html
-          git commit -m "Show grey full-question text on every quiz" || echo no change
+          git commit -m "Accurate full-question text and working show/hide button" || echo no change
           git push origin gh-pages
