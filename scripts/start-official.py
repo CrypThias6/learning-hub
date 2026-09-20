@@ -13,14 +13,6 @@ REPLACES = [
         "Only official-subject runs.",
     ),
     (
-        "Practice only \u2014 these won\u2019t count as official when the week begins.",
-        "Practice scores. Official subject runs count on the graph.",
-    ),
-    (
-        "Practice mode \u2014 the official week hasn\u2019t started yet.",
-        "Practice mode.",
-    ),
-    (
         "Play anytime to practice. Official scores begin when Matt starts the competition week.",
         "Play anytime to practice.",
     ),
@@ -29,12 +21,36 @@ REPLACES = [
         "",
     ),
     (
-        "Competition on \u2014 only your official subject counts on the graph.",
+        "Competition is on",
+        "Official scores",
+    ),
+]
+
+# JS bundle stores some punctuation as \\u escapes.
+ESCAPED = [
+    (
+        "Practice only \\u2014 these won\\u2019t count as official when the week begins.",
+        "Practice scores. Official subject runs count on the graph.",
+    ),
+    (
+        "Practice mode \\u2014 the official week hasn\\u2019t started yet.",
+        "Practice mode.",
+    ),
+    (
+        "Competition on \\u2014 only your official subject counts on the graph.",
         "Only your official subject counts on the graph.",
     ),
     (
-        "Competition is on",
-        "Official scores",
+        "Practice only \u2014 these won\u2019t count as official when the week begins.",
+        "Practice scores. Official subject runs count on the graph.",
+    ),
+    (
+        "Practice mode \u2014 the official week hasn\u2019t started yet.",
+        "Practice mode.",
+    ),
+    (
+        "Competition on \u2014 only your official subject counts on the graph.",
+        "Only your official subject counts on the graph.",
     ),
 ]
 
@@ -44,15 +60,15 @@ def main():
         print("usage: start-official.py FILE.js")
         return 2
     path = Path(sys.argv[1])
-    src = path.read_text(encoding="utf-8", errors="ignore")
-    out = src
-    for old, new in REPLACES:
+    out = path.read_text(encoding="utf-8", errors="ignore")
+    for old, new in REPLACES + ESCAPED:
         n = out.count(old)
-        print(("OK" if n else "WARN"), n, old[:70])
+        print(("OK" if n else "WARN"), n, old[:72])
         if n:
             out = out.replace(old, new)
     path.write_text(out, encoding="utf-8")
     print("wrote", path, path.stat().st_size)
+    print("left week", out.count("competition week"), out.count("official week"), out.count("week starts"), out.count("week begins"))
     return 0
 
 
