@@ -2,81 +2,135 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover, shrink-to-fit=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#0B1220" />
     <title>World Geo Game</title>
-    <style id="expo-reset">
+    <style>
       :root { --app-bg: #0B1220; }
-      html { height: 100%; background-color: var(--app-bg); color-scheme: dark; }
-      html, body { margin: 0; padding: 0; width: 100%; overflow: hidden; background-color: var(--app-bg); position: fixed; inset: 0; }
-      #root { display: flex; flex: 1; width: 100%; height: 100%; background-color: var(--app-bg); }
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--app-bg); position: fixed; inset: 0; overflow: hidden; }
+      #root { width: 100%; height: 100%; background: var(--app-bg); }
+      #dev-root { position: fixed; inset: 0; pointer-events: none; z-index: 2147483646; }
+      #dev-open, #dev-lock, #dev-panel { pointer-events: auto; }
       #dev-open {
-        position: fixed; right: 10px; bottom: 10px; z-index: 9998;
-        background: #22334d; color: #9bb0c9; border: 1px solid #3D5A80;
-        border-radius: 999px; padding: 8px 12px; font: 700 12px system-ui, sans-serif;
+        position: absolute; right: 12px; bottom: 12px;
+        background: #22334d; color: #d6e4f5; border: 1px solid #5B9CF5;
+        border-radius: 999px; padding: 10px 14px; font: 700 13px system-ui, sans-serif;
       }
-      #dev-panel, #dev-lock {
-        display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-        z-index: 9999; width: min(92vw, 360px); background: #152238; color: #fff;
+      #dev-lock, #dev-panel {
+        display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+        width: min(92vw, 360px); background: #152238; color: #fff;
         border: 1px solid #3D5A80; border-radius: 16px; padding: 16px; font-family: system-ui, sans-serif;
       }
-      #dev-panel h2, #dev-lock h2 { margin: 0 0 8px; font-size: 18px; }
-      #dev-panel p, #dev-lock p { margin: 0 0 14px; color: #9bb0c9; font-size: 13px; line-height: 1.4; }
-      #dev-lock input {
+      #dev-lock h2, #dev-panel h2 { margin: 0 0 8px; font-size: 18px; }
+      #dev-lock p, #dev-panel p { margin: 0 0 12px; color: #9bb0c9; font-size: 13px; line-height: 1.4; }
+      #dev-code {
         width: 100%; box-sizing: border-box; margin: 0 0 10px; padding: 12px;
         border-radius: 10px; border: 1px solid #3D5A80; background: #0B1220; color: #fff;
         font-size: 18px; letter-spacing: 4px; text-align: center;
       }
-      #dev-panel button, #dev-lock button { width: 100%; margin: 0 0 8px; padding: 12px; border-radius: 10px; border: 0; font-weight: 700; }
-      #dev-reset, #dev-unlock { background: #3DB8A8; color: #06201C; }
-      #dev-reset { background: #c44; color: #fff; }
+      #dev-lock button, #dev-panel button {
+        width: 100%; margin: 0 0 8px; padding: 12px; border-radius: 10px; border: 0; font-weight: 700;
+      }
+      #dev-unlock { background: #3DB8A8; color: #06201C; }
+      #dev-reset-person { background: #c44; color: #fff; }
+      #dev-reset-progress { background: #b45309; color: #fff; }
       #dev-close, #dev-cancel { background: #22334d; color: #d6e4f5; }
       #dev-error { color: #ff8a8a; min-height: 18px; margin: 0 0 8px; font-size: 13px; }
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <button id="dev-open" type="button">Dev settings</button>
-    <div id="dev-lock">
-      <h2>Dev settings</h2>
-      <p>Enter the passcode to continue.</p>
-      <input id="dev-code" type="password" inputmode="numeric" maxlength="8" autocomplete="off" />
-      <p id="dev-error"></p>
-      <button id="dev-unlock" type="button">Open</button>
-      <button id="dev-cancel" type="button">Cancel</button>
-    </div>
-    <div id="dev-panel">
-      <h2>Dev settings</h2>
-      <p>Reset person unlocks Who are you? on this device only. Scores stay.</p>
-      <button id="dev-reset" type="button">Reset person</button>
-      <button id="dev-close" type="button">Close</button>
+    <div id="dev-root">
+      <button id="dev-open" type="button">Dev settings</button>
+      <div id="dev-lock">
+        <h2>Dev settings</h2>
+        <p>Enter the passcode to continue.</p>
+        <input id="dev-code" type="password" inputmode="numeric" maxlength="8" autocomplete="off" />
+        <p id="dev-error"></p>
+        <button id="dev-unlock" type="button">Open</button>
+        <button id="dev-cancel" type="button">Cancel</button>
+      </div>
+      <div id="dev-panel">
+        <h2>Dev settings</h2>
+        <p>These only change this phone or browser.</p>
+        <button id="dev-reset-person" type="button">Reset person</button>
+        <button id="dev-reset-progress" type="button">Reset progress</button>
+        <button id="dev-close" type="button">Close</button>
+      </div>
     </div>
     <script>
       (function () {
         var PASS = '247';
+        var KEYS = {
+          family: '@wgg/selectedFamily',
+          settings: '@wgg/settings',
+          profiles: '@wgg/profiles',
+          leaderboard: '@wgg/leaderboard',
+          runs: '@wgg/competitionRuns'
+        };
         var lock = document.getElementById('dev-lock');
         var panel = document.getElementById('dev-panel');
         var code = document.getElementById('dev-code');
         var err = document.getElementById('dev-error');
+        var root = document.getElementById('dev-root');
         function hideAll() {
           lock.style.display = 'none';
           panel.style.display = 'none';
           code.value = '';
           err.textContent = '';
         }
-        document.getElementById('dev-open').addEventListener('click', function () {
+        function read(key) {
+          try { return localStorage.getItem(key); } catch (e) { return null; }
+        }
+        function write(key, value) {
+          try { localStorage.setItem(key, value); } catch (e) {}
+        }
+        function remove(key) {
+          try {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+          } catch (e) {}
+        }
+        function parse(raw, fallback) {
+          if (!raw) return fallback;
+          try { return JSON.parse(raw); } catch (e) { return fallback; }
+        }
+        function currentPerson() {
+          var id = read(KEYS.family);
+          if (id === 'matt' || id === 'lyla' || id === 'ken' || id === 'mum') return id;
+          var settings = parse(read(KEYS.settings), {});
+          var fromSettings = settings && settings.activeProfileId;
+          if (fromSettings === 'matt' || fromSettings === 'lyla' || fromSettings === 'ken' || fromSettings === 'mum') return fromSettings;
+          return null;
+        }
+        function emptyLearned() {
+          return { capitals: {}, cities: {}, facts: {}, seenCities: {} };
+        }
+        function emptyStats() {
+          return {
+            overallCorrect: 0, overallAnswered: 0,
+            capitalsCorrect: 0, capitalsAnswered: 0,
+            citiesCorrect: 0, citiesAnswered: 0,
+            factsCorrect: 0, factsAnswered: 0,
+            locateCorrect: 0, locateAnswered: 0, locateDistanceSum: 0,
+            continentStats: {}, bestStreak: 0, sectionsCompleted: [], fastestClears: {}
+          };
+        }
+        function reloadApp() {
+          var url = '/learning-hub/?dev=' + Date.now();
+          location.replace(url);
+        }
+        document.getElementById('dev-open').addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
           err.textContent = '';
           code.value = '';
           lock.style.display = 'block';
           panel.style.display = 'none';
           setTimeout(function () { code.focus(); }, 50);
-        });
-        document.getElementById('dev-cancel').addEventListener('click', hideAll);
-        document.getElementById('dev-close').addEventListener('click', hideAll);
+        }, true);
+        document.getElementById('dev-cancel').addEventListener('click', hideAll, true);
+        document.getElementById('dev-close').addEventListener('click', hideAll, true);
         document.getElementById('dev-unlock').addEventListener('click', function () {
           if (String(code.value).trim() === PASS) {
             lock.style.display = 'none';
@@ -88,21 +142,63 @@
             code.value = '';
             code.focus();
           }
-        });
+        }, true);
         code.addEventListener('keydown', function (e) {
           if (e.key === 'Enter') document.getElementById('dev-unlock').click();
         });
-        document.getElementById('dev-reset').addEventListener('click', function () {
+        document.getElementById('dev-reset-person').addEventListener('click', function () {
           if (!confirm('Reset person on this device? Who are you? will show again. Scores stay.')) return;
+          remove(KEYS.family);
           try {
-            localStorage.removeItem('@wgg/selectedFamily');
-            sessionStorage.removeItem('@wgg/selectedFamily');
             Object.keys(localStorage).forEach(function (k) {
-              if (k.indexOf('selectedFamily') !== -1) localStorage.removeItem(k);
+              if (k.indexOf('selectedFamily') !== -1) remove(k);
             });
           } catch (e) {}
-          location.reload();
-        });
+          var settings = parse(read(KEYS.settings), null);
+          if (settings && typeof settings === 'object') {
+            settings.activeProfileId = '';
+            settings.profileName = '';
+            write(KEYS.settings, JSON.stringify(settings));
+          }
+          reloadApp();
+        }, true);
+        document.getElementById('dev-reset-progress').addEventListener('click', function () {
+          var person = currentPerson();
+          var label = person || 'this device';
+          if (!confirm('Reset progress for ' + label + ' on this device? Official and practice scores for that person will be cleared here.')) return;
+          if (person) {
+            var profiles = parse(read(KEYS.profiles), []);
+            if (Array.isArray(profiles)) {
+              profiles = profiles.map(function (p) {
+                if (!p || p.id !== person) return p;
+                return {
+                  id: p.id,
+                  name: p.name,
+                  createdAt: p.createdAt || new Date().toISOString(),
+                  learned: emptyLearned(),
+                  stats: emptyStats(),
+                  lastMode: 'capitals',
+                  lastSectionId: 'oceania'
+                };
+              });
+              write(KEYS.profiles, JSON.stringify(profiles));
+            }
+            var board = parse(read(KEYS.leaderboard), []);
+            if (Array.isArray(board)) {
+              write(KEYS.leaderboard, JSON.stringify(board.filter(function (row) {
+                return row && row.profileId !== person;
+              })));
+            }
+            var runs = parse(read(KEYS.runs), []);
+            if (Array.isArray(runs)) {
+              write(KEYS.runs, JSON.stringify(runs.filter(function (row) {
+                return row && row.profileId !== person;
+              })));
+            }
+          }
+          reloadApp();
+        }, true);
+        document.body.appendChild(root);
       })();
     </script>
     <script src="/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js" defer></script>
