@@ -15,11 +15,12 @@ jobs:
         with:
           ref: gh-pages
 
-      - name: Fetch patcher and data
+      - name: Fetch patcher and any data files
         run: |
           base=https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts
-          for f in harden-quiz.py harden_part_a.py harden_part_b.py harden_part_c.py harden_part_d.py harden_part_e.py harden_part_f.py harden_part_g.py harden_part_h.py harden_part_i.py; do
-            curl -fsSL -o /tmp/$f $base/$f
+          curl -fsSL -o /tmp/harden-quiz.py $base/harden-quiz.py
+          for f in harden_part_a.py harden_part_b.py harden_part_c.py harden_part_d.py harden_part_e.py harden_part_f.py harden_part_g.py harden_part_h.py harden_part_i.py; do
+            curl -sSL -o /tmp/$f $base/$f || true
           done
           python3 -m py_compile /tmp/harden-quiz.py
 
