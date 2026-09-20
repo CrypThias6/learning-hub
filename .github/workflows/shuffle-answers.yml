@@ -1,0 +1,36 @@
+name: Shuffle Ken and Mum answer slots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Fetch shuffle script from main
+        run: |
+          curl -fsSL -o /tmp/shuffle-answers.py \
+            https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts/shuffle-answers.py
+          python3 -m py_compile /tmp/shuffle-answers.py
+
+      - name: Shuffle answer positions
+        run: |
+          python3 /tmp/shuffle-answers.py \
+            _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js
+          sed -i 's|index-e692932e42ea2ff98944c1bb62b893a7.js[^"]*|index-e692932e42ea2ff98944c1bb62b893a7.js?v=shuffle1|' index.html
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js index.html
+          git commit -m "Spread Ken and Mum correct answers across all four options" || echo no change
+          git push origin gh-pages
