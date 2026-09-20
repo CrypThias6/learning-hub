@@ -15,16 +15,30 @@ jobs:
         with:
           ref: gh-pages
 
-      - name: Fetch patch script
+      - name: Patch live bundle
         run: |
-          curl -fsSL -o /tmp/start-official.py \
-            https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts/start-official.py
-          python3 -m py_compile /tmp/start-official.py
-
-      - name: Patch live bundle and cache-bust
-        run: |
-          python3 /tmp/start-official.py \
-            _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js')
+          out = p.read_text(encoding='utf-8', errors='ignore')
+          reps = [
+            ('r.exports={started:!1,startedAt:null}', 'r.exports={started:!0,startedAt:null}'),
+            ('Only official-subject runs after the week started.', 'Only official-subject runs.'),
+            ('Play anytime to practice. Official scores begin when Matt starts the competition week.', 'Play anytime to practice.'),
+            (' (once the week starts)', ''),
+            ('Competition is on', 'Official scores'),
+            ('these won\\u2019t count as official when the week begins.', 'Official subject runs count on the graph.'),
+            ('the official week hasn\\u2019t started yet.', 'ready to play.'),
+          ]
+          for old, new in reps:
+              n = out.count(old)
+              print(('OK' if n else 'WARN'), n, old[:70])
+              if n:
+                  out = out.replace(old, new)
+          p.write_text(out, encoding='utf-8')
+          print('started', out.count('r.exports={started:!0,startedAt:null}'))
+          print('week leftovers', out.count('competition week'), out.count('official week'), out.count('week starts'), out.count('week begins'))
+          PY
           sed -i 's|index-e692932e42ea2ff98944c1bb62b893a7.js[^"]*|index-e692932e42ea2ff98944c1bb62b893a7.js?v=live1|' index.html
 
       - name: Commit and push
