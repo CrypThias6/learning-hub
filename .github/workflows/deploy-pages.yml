@@ -33,7 +33,7 @@ jobs:
             fi
           done
           python3 << 'PY'
-          import struct, zlib, pathlib
+          import base64, gzip, struct, zlib, pathlib
           def write_png(path, rgba=(11,18,32,255), size=48):
               path = pathlib.Path(path)
               if path.exists():
@@ -51,16 +51,29 @@ jobs:
                        "android-icon-foreground.png", "android-icon-background.png",
                        "android-icon-monochrome.png"]:
               write_png(f"assets/{name}")
+
+          def write_json_from_b64_chunks(out_path):
+              out = pathlib.Path(out_path)
+              if out.exists():
+                  return
+              chunk_files = sorted(out.parent.glob(out.name + ".gz.b64.s*"))
+              if not chunk_files:
+                  return
+              payload = "".join(chunk.read_text() for chunk in chunk_files)
+              out.write_bytes(gzip.decompress(base64.b64decode(payload)))
+              print(f"Decoded {len(chunk_files)} chunks -> {out}")
+
+          write_json_from_b64_chunks("assets/data/world_geo_game.json")
+          write_json_from_b64_chunks("assets/data/horse_quiz.json")
           PY
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Export web build
         run: npx expo export -p web --output-dir dist
