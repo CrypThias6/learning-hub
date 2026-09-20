@@ -27,11 +27,26 @@ jobs:
           python3 /tmp/patch-question-details.py \
             _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js \
             _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js
+          python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html')
+t=p.read_text()
+t=t.replace(
+  '/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js"',
+  '/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js?v=details5"'
+)
+t=t.replace(
+  '/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js?v=details5"',
+  '/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js?v=details5"'
+)
+p.write_text(t)
+print('index cache-bust ok')
+PY
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js
-          git commit -m "Add grey detail text under every quiz question" || echo no change
+          git add _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js index.html
+          git commit -m "Show grey full-question text on every quiz" || echo no change
           git push origin gh-pages
