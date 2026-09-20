@@ -1,162 +1,140 @@
-import React, { useState } from 'react';
-import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import React, { useMemo, useState } from 'react';
+import { Pressable, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { colors } from './src/constants/theme';
-import { GameProvider, useGame } from './src/context/GameContext';
-import ChallengeScreen, { RoundSummary } from './src/screens/ChallengeScreen';
-import HomeScreen from './src/screens/HomeScreen';
-import HorseQuizScreen, { HorseRoundSummary } from './src/screens/HorseQuizScreen';
-import HorseResultsScreen from './src/screens/HorseResultsScreen';
-import LeaderboardScreen from './src/screens/LeaderboardScreen';
-import LearnScreen from './src/screens/LearnScreen';
-import MainHubScreen from './src/screens/MainHubScreen';
-import ResultsScreen from './src/screens/ResultsScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
-import { GameMode } from './src/types/game';
 
-type Screen =
-  | { name: 'hub' }
-  | { name: 'countries' }
-  | { name: 'horses' }
-  | { name: 'horseResults'; summary: HorseRoundSummary }
-  | { name: 'learn' }
-  | { name: 'challenge'; mode: GameMode }
-  | { name: 'settings'; from: 'hub' | 'countries' }
-  | { name: 'leaderboard' }
-  | { name: 'results'; summary: RoundSummary };
+type Profile = { id: string; name: string; best: number; plays: number };
+type Question = { country: string; correct: string; choices: string[] };
 
-function Root() {
-  const { ready } = useGame();
-  const [screen, setScreen] = useState<Screen>({ name: 'hub' });
-  const [challengeKey, setChallengeKey] = useState(0);
-  const [horseKey, setHorseKey] = useState(0);
-
-  if (!ready) {
-    return (
-      <View style={styles.boot}>
-        <ActivityIndicator color={colors.accent} size="large" />
-      </View>
-    );
-  }
-
-  const goHub = () => setScreen({ name: 'hub' });
-  const goCountries = () => setScreen({ name: 'countries' });
-
-  if (screen.name === 'learn') {
-    return <LearnScreen onBack={goCountries} />;
-  }
-  if (screen.name === 'challenge') {
-    return (
-      <ChallengeScreen
-        key={challengeKey}
-        mode={screen.mode}
-        onBack={goCountries}
-        onDone={(summary) => setScreen({ name: 'results', summary })}
-      />
-    );
-  }
-  if (screen.name === 'settings') {
-    return (
-      <SettingsScreen
-        onBack={() =>
-          setScreen({ name: screen.from === 'countries' ? 'countries' : 'hub' })
-        }
-      />
-    );
-  }
-  if (screen.name === 'leaderboard') {
-    return <LeaderboardScreen onBack={goCountries} />;
-  }
-  if (screen.name === 'results') {
-    return (
-      <ResultsScreen
-        summary={screen.summary}
-        onHome={goCountries}
-        onReplay={() => {
-          setChallengeKey((k) => k + 1);
-          setScreen({ name: 'challenge', mode: screen.summary.mode });
-        }}
-      />
-    );
-  }
-  if (screen.name === 'horses') {
-    return (
-      <HorseQuizScreen
-        key={horseKey}
-        onBack={goHub}
-        onDone={(summary) => setScreen({ name: 'horseResults', summary })}
-      />
-    );
-  }
-  if (screen.name === 'horseResults') {
-    return (
-      <HorseResultsScreen
-        summary={screen.summary}
-        onHome={goHub}
-        onReplay={() => {
-          setHorseKey((k) => k + 1);
-          setScreen({ name: 'horses' });
-        }}
-      />
-    );
-  }
-  if (screen.name === 'countries') {
-    return (
-      <HomeScreen
-        onBackToHub={goHub}
-        onNavigate={(name, params) => {
-          if (name === 'learn') setScreen({ name: 'learn' });
-          else if (name === 'settings') setScreen({ name: 'settings', from: 'countries' });
-          else if (name === 'leaderboard') setScreen({ name: 'leaderboard' });
-          else if (name === 'challenge') {
-            setChallengeKey((k) => k + 1);
-            setScreen({
-              name: 'challenge',
-              mode: (params?.mode as GameMode) || 'capitals',
-            });
-          }
-        }}
-      />
-    );
-  }
-
-  return (
-    <MainHubScreen
-      onCountries={goCountries}
-      onHorses={() => {
-        setHorseKey((k) => k + 1);
-        setScreen({ name: 'horses' });
-      }}
-      onSettings={() => setScreen({ name: 'settings', from: 'hub' })}
-    />
-  );
-}
+const QUESTIONS: Question[] = [
+  { country: 'France', correct: 'Paris', choices: ['Paris', 'Lyon', 'Marseille', 'Nice'] },
+  { country: 'Japan', correct: 'Tokyo', choices: ['Kyoto', 'Tokyo', 'Osaka', 'Nagoya'] },
+  { country: 'Brazil', correct: 'Brasília', choices: ['São Paulo', 'Brasília', 'Rio de Janeiro', 'Salvador'] },
+  { country: 'Australia', correct: 'Canberra', choices: ['Sydney', 'Melbourne', 'Canberra', 'Perth'] },
+  { country: 'Canada', correct: 'Ottawa', choices: ['Toronto', 'Ottawa', 'Vancouver', 'Montreal'] },
+];
 
 export default function App() {
+  const [profiles, setProfiles] = useState<Profile[]>([
+    { id: 'p1', name: 'Player 1', best: 0, plays: 0 },
+    { id: 'p2', name: 'Player 2', best: 0, plays: 0 },
+  ]);
+  const [profileId, setProfileId] = useState('p1');
+  const [index, setIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [finished, setFinished] = useState(false);
+
+  const current = QUESTIONS[index];
+  const leaderboard = useMemo(
+    () => [...profiles].sort((a, b) => b.best - a.best || a.name.localeCompare(b.name)),
+    [profiles]
+  );
+
+  const answer = (choice: string) => {
+    const nextScore = score + (choice === current.correct ? 1 : 0);
+    if (index === QUESTIONS.length - 1) {
+      setScore(nextScore);
+      setFinished(true);
+      setProfiles((prev) =>
+        prev.map((p) =>
+          p.id === profileId ? { ...p, plays: p.plays + 1, best: Math.max(p.best, nextScore) } : p
+        )
+      );
+      return;
+    }
+    setScore(nextScore);
+    setIndex((v) => v + 1);
+  };
+
+  const reset = () => {
+    setIndex(0);
+    setScore(0);
+    setFinished(false);
+  };
+
   return (
-    <GestureHandlerRootView style={styles.root}>
-      <SafeAreaProvider>
-        <GameProvider>
-          <StatusBar barStyle="light-content" backgroundColor={colors.bg} translucent />
-          <View style={styles.root}>
-            <Root />
+    <SafeAreaView style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      <View style={styles.panel}>
+        <Text style={styles.title}>World Geo Game</Text>
+        <Text style={styles.subtitle}>Profiles + Leaderboard enabled</Text>
+
+        <View style={styles.row}>
+          {profiles.map((p) => (
+            <Pressable
+              key={p.id}
+              style={[styles.profile, p.id === profileId && styles.profileActive]}
+              onPress={() => {
+                setProfileId(p.id);
+                reset();
+              }}
+            >
+              <Text style={styles.profileText}>{p.name}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {!finished ? (
+          <View style={styles.quiz}>
+            <Text style={styles.progress}>
+              {index + 1}/{QUESTIONS.length} • Score {score}
+            </Text>
+            <Text style={styles.question}>Capital of {current.country}?</Text>
+            {current.choices.map((c) => (
+              <Pressable key={c} style={styles.choice} onPress={() => answer(c)}>
+                <Text style={styles.choiceText}>{c}</Text>
+              </Pressable>
+            ))}
           </View>
-        </GameProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+        ) : (
+          <View style={styles.quiz}>
+            <Text style={styles.question}>Final score: {score}</Text>
+            <Pressable style={styles.choice} onPress={reset}>
+              <Text style={styles.choiceText}>Play again</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <View style={styles.board}>
+          <Text style={styles.boardTitle}>Leaderboard</Text>
+          {leaderboard.map((p, i) => (
+            <Text key={p.id} style={styles.boardRow}>
+              {i + 1}. {p.name} — best {p.best}/{QUESTIONS.length} ({p.plays} plays)
+            </Text>
+          ))}
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg,
+  root: { flex: 1, backgroundColor: colors.bg },
+  panel: { flex: 1, padding: 16, gap: 12 },
+  title: { color: colors.text, fontSize: 28, fontWeight: '800' },
+  subtitle: { color: colors.muted, fontSize: 14 },
+  row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  profile: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  boot: {
-    flex: 1,
-    backgroundColor: colors.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
+  profileActive: { borderColor: colors.accent, backgroundColor: colors.cardAlt },
+  profileText: { color: colors.text, fontWeight: '600' },
+  quiz: { backgroundColor: colors.card, borderRadius: 12, padding: 14, gap: 10 },
+  progress: { color: colors.muted, fontSize: 13 },
+  question: { color: colors.text, fontSize: 20, fontWeight: '700' },
+  choice: {
+    backgroundColor: colors.cardAlt,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
   },
+  choiceText: { color: colors.text, fontSize: 15, fontWeight: '600' },
+  board: { marginTop: 8, backgroundColor: colors.card, borderRadius: 12, padding: 14, gap: 6 },
+  boardTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  boardRow: { color: colors.muted, fontSize: 14 },
 });
