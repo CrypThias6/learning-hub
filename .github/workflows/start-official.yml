@@ -27,14 +27,16 @@ jobs:
             ('Play anytime to practice. Official scores begin when Matt starts the competition week.', 'Play anytime to practice.'),
             (' (once the week starts)', ''),
             ('Competition is on', 'Official scores'),
-            ('these won\\u2019t count as official when the week begins.', 'Official subject runs count on the graph.'),
-            ('the official week hasn\\u2019t started yet.', 'ready to play.'),
+            ('count as official when the week begins.', 'count on the graph.'),
+            ('the official week hasn', 'play is ready hasn'),
           ]
           for old, new in reps:
               n = out.count(old)
               print(('OK' if n else 'WARN'), n, old[:70])
               if n:
                   out = out.replace(old, new)
+          # clean the dummy marker used above
+          out = out.replace('play is ready hasn', 'the session hasn')
           p.write_text(out, encoding='utf-8')
           print('started', out.count('r.exports={started:!0,startedAt:null}'))
           print('week leftovers', out.count('competition week'), out.count('official week'), out.count('week starts'), out.count('week begins'))
