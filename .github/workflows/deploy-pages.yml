@@ -30,14 +30,23 @@ jobs:
             local man="assets/data/${prefix}.manifest"
             if [ -f "$single" ]; then
               base64 -d "$single" | gzip -d > "$out"
-            elif ls "assets/data/${prefix}.s"* >/dev/null 2>&1; then
-              cat "assets/data/${prefix}.s"* | base64 -d | gzip -d > "$out"
-            elif [ -f "$man" ]; then
-              parts=$(tr '\n' ' ' < "$man")
-              (cd assets/data && cat $parts) | base64 -d | gzip -d > "$out"
             else
-              echo "Missing asset data for $prefix" >&2
-              exit 1
+              # Assemble from .s0/.s1 full shards and/or zero-padded offset pieces
+              local parts=()
+              [ -f "assets/data/${prefix}.s0" ] && parts+=("assets/data/${prefix}.s0")
+              [ -f "assets/data/${prefix}.s1" ] && parts+=("assets/data/${prefix}.s1")
+              # Numeric offset pieces e.g. prefix.004000 (sorted)
+              while IFS= read -r f; do parts+=("$f"); done < <(ls assets/data/${prefix}.[0-9]* 2>/dev/null | sort || true)
+              if [ ${#parts[@]} -gt 0 ]; then
+                cat "${parts[@]}" | base64 -d | gzip -d > "$out"
+              elif [ -f "$man" ]; then
+                local mp
+                mp=$(tr '\n' ' ' < "$man")
+                (cd assets/data && cat $mp) | base64 -d | gzip -d > "$out"
+              else
+                echo "Missing asset data for $prefix" >&2
+                exit 1
+              fi
             fi
             echo "Restored $out ($(wc -c < "$out") bytes)"
           }
