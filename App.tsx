@@ -22,6 +22,7 @@ export default function App() {
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const gameInProgress = !finished && (index > 0 || score > 0);
 
   const current = QUESTIONS[index];
   const leaderboard = useMemo(
@@ -62,7 +63,12 @@ export default function App() {
           {profiles.map((p) => (
             <Pressable
               key={p.id}
-              style={[styles.profile, p.id === profileId && styles.profileActive]}
+              style={[
+                styles.profile,
+                p.id === profileId && styles.profileActive,
+                gameInProgress && styles.profileDisabled,
+              ]}
+              disabled={gameInProgress}
               onPress={() => {
                 setProfileId(p.id);
                 reset();
@@ -122,6 +128,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   profileActive: { borderColor: colors.accent, backgroundColor: colors.cardAlt },
+  profileDisabled: { opacity: 0.6 },
   profileText: { color: colors.text, fontWeight: '600' },
   quiz: { backgroundColor: colors.card, borderRadius: 12, padding: 14, gap: 10 },
   progress: { color: colors.muted, fontSize: 13 },
