@@ -1,82 +1,120 @@
+
+def js_esc(t):
+    return t.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ").replace("\r", " ")
+
+def dec(t):
+    try:
+        return bytes(t, "utf-8").decode("unicode_escape")
+    except Exception:
+        return t
+
 def detail_for(qid, cat, q):
     if qid in SPEC:
         return SPEC[qid]
     ql = q.lower()
     if "stand for" in ql:
-        return "This is an acronym. Expand every official letter; do not invent a similar phrase."
+        return "This is an acronym. Expand every official letter; do not invent a similar phrase. Full question: " + q
     if "how many" in ql:
-        return "This needs the standard official number, not a nearby look-alike figure."
+        return "This needs the standard official number, not a nearby look-alike figure. Full question: " + q
     if "worth" in ql and any(w in ql for w in ("point", "score", "try", "goal", "bullseye")):
-        return "This asks for the official point value in that sport's usual rules."
+        return "This asks for the official point value in that sport's usual rules. Full question: " + q
     if ql.startswith("where ") or "located" in ql or "found in" in ql:
-        return "Picture the place on the body, map, or gear, then match the best description."
+        return "Picture the place on the body, map, or gear, then match the best description. Full question: " + q
     if "capital" in ql:
-        return "Name the official political capital. In some countries that is not the largest city."
+        return "Name the official political capital. In some countries that is not the largest city. Full question: " + q
     if "largest city" in ql:
-        return "This asks for the biggest city by people, which may not be the capital."
+        return "This asks for the biggest city by people, which may not be the capital. Full question: " + q
     if "watl" in ql:
-        return "Use World Axe Throwing League rules here, not IATF scoring."
+        return "Use World Axe Throwing League rules here, not IATF scoring. Full question: " + q
     if "iatf" in ql:
-        return "Use International Axe Throwing Federation rules. They are not identical to WATL."
+        return "Use International Axe Throwing Federation rules. They are not identical to WATL. Full question: " + q
     if "nzac" in ql:
-        return "Stay with NZAC documents and New Zealand counselling practice."
+        return "Stay with NZAC documents and New Zealand counselling practice. Full question: " + q
     if "te tiriti" in ql or "treaty" in ql:
-        return "This is about Te Tiriti o Waitangi in counselling and helping work in Aotearoa."
+        return "This is about Te Tiriti o Waitangi in counselling and helping work in Aotearoa. Full question: " + q
     if "gvm" in ql:
-        return "GVM is the maximum loaded weight allowed for that one vehicle."
+        return "GVM is the maximum loaded weight allowed for that one vehicle. Full question: " + q
     if "istanbul" in ql:
-        return "Istanbul is Turkey's huge historic city on the Bosporus, not the inland capital."
+        return "Istanbul is Turkey's huge historic city on the Bosporus, not the inland capital. Full question: " + q
     if "massey" in ql or "pgdip" in ql:
-        return "This is about Massey's postgraduate counselling qualification and NZQF level."
+        return "This is about Massey's postgraduate counselling qualification and NZQF level. Full question: " + q
     if "supervision" in ql:
-        return "Supervision is a regular professional conversation that keeps practice safe and skilful."
+        return "Supervision is a regular professional conversation that keeps practice safe and skilful. Full question: " + q
     if "confidentiality" in ql:
-        return "Confidentiality is the usual rule, with safety limits when serious harm is imminent."
+        return "Confidentiality is the usual rule, with safety limits when serious harm is imminent. Full question: " + q
     if "colic" in ql:
-        return "Colic means abdominal pain in horses and can be an emergency."
-    return CAT.get(cat, "Read the full question again. This grey line only explains the task; it does not give the answer.")
+        return "Colic means abdominal pain in horses and can be an emergency. Full question: " + q
+    hint = CAT.get(cat, "Read the full question again. This line only explains the task; it does not give the answer.")
+    return hint + " Full question: " + q
 
 UI = [
-    ("(0,b.jsx)(c.default,{style:y.qCard,children:(0,b.jsx)(n.default,{style:y.qText,children:V.question})})",
-     "(0,b.jsxs)(c.default,{style:y.qCard,children:[(0,b.jsx)(n.default,{style:y.qText,children:V.question}),V.detail?(0,b.jsx)(n.default,{style:y.qDetail,children:V.detail}):null]})"),
-    ("(0,b.jsx)(c.default,{style:y.qCard,children:(0,b.jsx)(n.default,{style:y.qText,children:$.question})})",
-     "(0,b.jsxs)(c.default,{style:y.qCard,children:[(0,b.jsx)(n.default,{style:y.qText,children:$.question}),$.detail?(0,b.jsx)(n.default,{style:y.qDetail,children:$.detail}):null]})"),
-    ("qText:{color:u.colors.text,fontSize:18,fontWeight:'700',lineHeight:26}",
-     "qText:{color:u.colors.text,fontSize:18,fontWeight:'700',lineHeight:26},qDetail:{color:u.colors.muted,fontSize:13,fontWeight:'500',lineHeight:18,marginTop:8}"),
-    ('(0,C.jsx)(l.default,{style:b.prompt,children:it.prompt}),dt&&it.note&&v',
-     '(0,C.jsx)(l.default,{style:b.prompt,children:it.prompt}),it.detail?(0,C.jsx)(l.default,{style:b.note,children:it.detail}):null,dt&&it.note&&v'),
-    ("prompt:`What is the capital of ${n.name}?`,countryId:n.id",
-     "prompt:`What is the capital of ${n.name}?`,detail:`Name the official capital city of ${n.name}. A few countries have more than one capital - use the usual school-atlas answer unless a note says otherwise.`,countryId:n.id"),
-    ("prompt:`Which is a major city in ${c.name}?`,countryId:c.id",
-     "prompt:`Which is a major city in ${c.name}?`,detail:`Choose a well-known city that is inside ${c.name}. Do not pick a city from a neighbouring country.`,countryId:c.id"),
-    ("prompt:`What\\u2019s a fact about ${a}?`,countryId:i.id",
-     "prompt:`What\\u2019s a fact about ${a}?`,detail:`Pick a true fact about this place. Use the study cards; wrong cards belong to other places.`,countryId:i.id"),
-    ("prompt:`Tap the map where ${t.name} is`,countryId:t.countryId",
-     "prompt:`Tap the map where ${t.name} is`,detail:`Tap as close as you can to the real map location of ${t.name}. Closer taps score better.`,countryId:t.countryId"),
-    ("prompt:`Which country is ${n.name} in?`,countryId:c.id",
-     "prompt:`Which country is ${n.name} in?`,detail:`Choose the country that ${n.name} belongs to. Nearby countries are often used as look-alike answers.`,countryId:c.id"),
+    (
+        "question:String(t.question||''),choices:i,correctIndex:",
+        "question:String(t.question||''),detail:t.detail?String(t.detail):void 0,choices:i,correctIndex:",
+    ),
+    (
+        "[H,I]=(0,t.useState)(null),[q,P]=(0,t.useState)(!1)",
+        "[H,I]=(0,t.useState)(null),[q,P]=(0,t.useState)(!1),[G,K]=(0,t.useState)(!1)",
+    ),
+    (
+        "I(null),P(!1)",
+        "I(null),P(!1),K(!1)",
+    ),
+    (
+        "[M,_]=(0,t.useState)(null),[N,D]=(0,t.useState)(!1)",
+        "[M,_]=(0,t.useState)(null),[N,D]=(0,t.useState)(!1),[G,K]=(0,t.useState)(!1)",
+    ),
+    (
+        "_(null),D(!1)",
+        "_(null),D(!1),K(!1)",
+    ),
+    (
+        "[rt,nt]=(0,e.useState)(null)",
+        "[rt,nt]=(0,e.useState)(null),[pt,ht]=(0,e.useState)(!1)",
+    ),
+    (
+        "ot(!1),L+1>=W.length?st():$(t=>t+1)",
+        "ot(!1),ht(!1),L+1>=W.length?st():$(t=>t+1)",
+    ),
+    (
+        "[(0,b.jsx)(n.default,{style:y.qText,children:V.question}),V.detail?(0,b.jsx)(n.default,{style:y.qDetail,children:V.detail}):null]",
+        "[(0,b.jsx)(n.default,{style:y.qText,children:V.question}),V.detail?(0,b.jsxs)(c.default,{style:y.detailWrap,children:[(0,b.jsx)(i.default,{style:y.detailBtn,onPress:()=>K(t=>!t),children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:G?\"Hide full question\":\"Click to view full question\"})}),G?(0,b.jsx)(n.default,{style:y.qDetail,children:V.detail}):null]}):null]",
+    ),
+    (
+        "[(0,b.jsx)(n.default,{style:y.qText,children:$.question}),$.detail?(0,b.jsx)(n.default,{style:y.qDetail,children:$.detail}):null]",
+        "[(0,b.jsx)(n.default,{style:y.qText,children:$.question}),$.detail?(0,b.jsxs)(c.default,{style:y.detailWrap,children:[(0,b.jsx)(i.default,{style:y.detailBtn,onPress:()=>K(t=>!t),children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:G?\"Hide full question\":\"Click to view full question\"})}),G?(0,b.jsx)(n.default,{style:y.qDetail,children:$.detail}):null]}):null]",
+    ),
+    (
+        "qDetail:{color:u.colors.muted,fontSize:13,fontWeight:'500',lineHeight:18,marginTop:8}",
+        "qDetail:{color:u.colors.muted,fontSize:13,fontWeight:'500',lineHeight:18,marginTop:8},detailWrap:{marginTop:8},detailBtn:{alignSelf:'flex-start',marginTop:8,paddingVertical:8,paddingHorizontal:12,borderRadius:999,borderWidth:1,borderColor:u.colors.border,backgroundColor:u.colors.cardAlt},detailBtnText:{color:u.colors.muted,fontSize:13,fontWeight:'700'}",
+    ),
+    (
+        "it.detail?(0,C.jsx)(l.default,{style:b.note,children:it.detail}):null",
+        "it.detail?(0,C.jsxs)(c.default,{children:[(0,C.jsx)(i.default,{onPress:()=>ht(t=>!t),children:(0,C.jsx)(l.default,{style:b.note,children:pt?\"Hide full question\":\"Click to view full question\"})}),pt?(0,C.jsx)(l.default,{style:b.note,children:it.detail}):null]}):null",
+    ),
 ]
 
-QRE = re.compile(r'\{id:"([^"]+)",category:"([^"]+)",question:"((?:\\.|[^"\\])+)",choices:\[((?:\\.|[^\[\]])*)\],correctIndex:(\d+)')
+QRE = re.compile(
+    r'\{id:"([^"]+)",category:"([^"]+)",question:"((?:\\.|[^"\\])+)",(?:detail:"(?:\\.|[^"\\])*",)?choices:\[((?:\\.|[^\[\]])*)\],correctIndex:(\d+)'
+)
 
 def patch(src):
     out = src
     for old, new in UI:
         n = out.count(old)
-        print(("OK" if n else "WARN"), n, old[:50])
+        print(("OK" if n else "WARN"), n, old[:70])
         if n:
             out = out.replace(old, new)
     inj = [0]
     def repl(m):
         qid, cat, qraw, ch, idx = m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)
-        whole = m.group(0)
-        if ",detail:\"" in whole:
-            return whole
         d = detail_for(qid, cat, dec(qraw))
         inj[0] += 1
-        return '{id:"%s",category:"%s",question:"%s",detail:"%s",choices:[%s],correctIndex:%s' % (qid, cat, qraw, js_esc(d), ch, idx)
+        return '{id:"%s",category:"%s",question:"%s",detail:"%s",choices:[%s],correctIndex:%s' % (
+            qid, cat, qraw, js_esc(d), ch, idx
+        )
     out = QRE.sub(repl, out)
-    print("injected", inj[0])
+    print("details", inj[0])
     return out
 
 def main():
