@@ -23,9 +23,9 @@ export default function App() {
   const [profileId, setProfileId] = useState('p1');
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [started, setStarted] = useState(false);
+  const [inRound, setInRound] = useState(false);
   const [finished, setFinished] = useState(false);
-  const gameInProgress = started && !finished;
+  const gameInProgress = inRound && !finished;
   const hasQuestions = QUESTIONS.length > 0;
 
   const current = QUESTIONS[index];
@@ -36,11 +36,11 @@ export default function App() {
 
   const answer = (choice: string) => {
     if (!hasQuestions || !current) return;
-    setStarted(true);
     const nextScore = score + (choice === current.correct ? 1 : 0);
     if (index === QUESTIONS.length - 1) {
       setScore(nextScore);
       setFinished(true);
+      setInRound(false);
       setProfiles((prev) =>
         prev.map((p) =>
           p.id === profileId ? { ...p, plays: p.plays + 1, best: Math.max(p.best, nextScore) } : p
@@ -55,8 +55,15 @@ export default function App() {
   const reset = () => {
     setIndex(0);
     setScore(0);
-    setStarted(false);
+    setInRound(false);
     setFinished(false);
+  };
+
+  const startRound = () => {
+    setIndex(0);
+    setScore(0);
+    setFinished(false);
+    setInRound(true);
   };
 
   return (
@@ -90,6 +97,13 @@ export default function App() {
           <View style={styles.quiz}>
             <Text style={styles.question}>No quiz data available.</Text>
           </View>
+        ) : !inRound && !finished ? (
+          <View style={styles.quiz}>
+            <Text style={styles.question}>Ready for a new round?</Text>
+            <Pressable style={styles.choice} onPress={startRound}>
+              <Text style={styles.choiceText}>Start quiz</Text>
+            </Pressable>
+          </View>
         ) : !finished ? (
           <View style={styles.quiz}>
             <Text style={styles.progress}>
@@ -105,7 +119,7 @@ export default function App() {
         ) : (
           <View style={styles.quiz}>
             <Text style={styles.question}>Final score: {score}</Text>
-            <Pressable style={styles.choice} onPress={reset}>
+            <Pressable style={styles.choice} onPress={startRound}>
               <Text style={styles.choiceText}>Play again</Text>
             </Pressable>
           </View>
