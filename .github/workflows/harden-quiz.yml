@@ -1,0 +1,38 @@
+name: Harden quiz options and extra text on Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Fetch patcher and data
+        run: |
+          base=https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts
+          for f in harden-quiz.py harden_part_a.py harden_part_b.py harden_part_c.py harden_part_d.py harden_part_e.py harden_part_f.py harden_part_g.py harden_part_h.py harden_part_i.py; do
+            curl -fsSL -o /tmp/$f $base/$f
+          done
+          python3 -m py_compile /tmp/harden-quiz.py
+
+      - name: Patch live bundle
+        run: |
+          python3 /tmp/harden-quiz.py \
+            _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js
+          sed -i 's|index-e692932e42ea2ff98944c1bb62b893a7.js[^"]*|index-e692932e42ea2ff98944c1bb62b893a7.js?v=hard1|' index.html
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js index.html
+          git commit -m "Harden quiz options and stop extra text naming the answer" || echo no change
+          git push origin gh-pages
