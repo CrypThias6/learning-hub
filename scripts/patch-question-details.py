@@ -1,11 +1,22 @@
 #!/usr/bin/env python3
-"""Add grey detail text under every quiz question in the live JS bundle."""
-from __future__ import annotations
-import re, sys
+"""Patch the live Pages JS bundle.
+
+Requires DETAILS to already be defined (concat details_0.py .. details_3.py first).
+Adds a working show/hide button and accurate extra wording for every question.
+"""
+import re
+import sys
 from pathlib import Path
 
+
 def js_esc(t):
-    return t.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ").replace("\r", " ")
+    return (
+        t.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", " ")
+        .replace("\r", " ")
+    )
+
 
 def dec(t):
     try:
@@ -13,46 +24,96 @@ def dec(t):
     except Exception:
         return t
 
-CAT = {
-    "disciplines": "This is a horse sport or competition question. Read the named event or movement, then pick the matching meaning.",
-    "anatomy": "This is a horse-body question. Picture that part on a living horse before you choose.",
-    "care": "This is everyday horse care and welfare. Choose the safest, most complete habit.",
-    "tack": "This is about saddlery or bits. Think what that piece of equipment is for and how it acts.",
-    "breeds": "This asks what a named breed was developed for, or the trait it is most known for.",
-    "rules": "This is arena manners or official competition rules. Think safety and what judges actually score.",
-    "axe_throwing": "Use the named axe-throwing rule set (WATL or IATF). Those two leagues do not score every throw the same way.",
-    "rugby": "This is rugby union unless the question clearly says league. Points, player numbers, and restarts are different.",
-    "trucks_nz": "Use New Zealand truck words such as GVM, HPMV, licence classes, and trailer types.",
-    "farm_animals": "This is NZ farm vocabulary or animal care. Match the correct animal name or husbandry idea.",
-    "decks": "This is outdoor timber deck building in New Zealand, including treatment levels, joists, and barriers.",
-    "turkey_country": "This is the country Turkiye / Turkey - geography, history, or culture - not the farm bird.",
-    "nzac_ethics": "Use the NZAC Code of Ethics and NZ counselling membership rules, not overseas registration boards.",
-    "te_tiriti_culture": "This is Te Tiriti o Waitangi and culturally safe helping practice in Aotearoa New Zealand.",
-    "counselling_theories": "Name the approach, founder, or key idea. Keep CBT, person-centred, and systems ideas separate.",
-    "counselling_skills": "This is a session skill such as listening, questioning, or contracting. Pick what that skill is for.",
-    "supervision": "This is professional supervision for counsellors in New Zealand, including NZAC expectations.",
-    "mental_health_basics": "This is a plain-language mental-health idea. Stay inside a counsellor role, not a doctor's.",
-    "children_guidance_nz": "This is school guidance and work with children and young people in Aotearoa New Zealand.",
-    "family_couples": "This is family or couples counselling. Think patterns between people, not only one person's traits.",
-    "programme_nz_context": "This is counsellor education in New Zealand, especially Massey study and the NZ Qualifications Framework.",
-}
 
-SPEC = {
-    "hq001": "Olympic riding includes more than one sport. This asks which competition puts those three phases together.",
-    "hq002": "A piaffe is a named dressage movement. Think how the legs move and whether the horse travels forward.",
-    "hq003": "A first jumping round is usually scored on faults before style. Time often only decides a later jump-off.",
-    "hq004": "FEI is the international body that writes rules for many horse sports. Expand the letters.",
-    "hq026": "The withers are the ridge between the shoulder blades. Height is measured there.",
-    "hq028": "Look at the underside of the hoof. The frog is the softer V-shaped part.",
-    "hq053": "Colic means belly pain in horses. Serious signs mean call a veterinarian.",
-    "kq001": "WATL is the main league name in this style of axe throwing. Expand each letter.",
-    "kq024": "Rugby union and rugby league do not start with the same number of players.",
-    "kq025": "A try is grounding the ball in in-goal. Use the rugby union point value before any kick.",
-    "kq047": "GVM is the maximum loaded weight allowed for that vehicle on its plate.",
-    "kq117": "Turkey's capital is not its largest city. Name the political capital inland.",
-    "kq118": "The biggest city sits on the Bosporus and is not the capital.",
-    "mc001": "NZAC is the main professional association for counsellors in Aotearoa New Zealand. Expand the letters.",
-    "mc002": "Counselling in NZ is largely self-regulated through a professional body, unlike doctors.",
-    "mc041": "Carl Rogers founded a major humanistic school. Name that approach, not CBT.",
-    "mc133": "The Massey PGDip is an academic diploma. Alone it is not a practising counsellor licence.",
-}
+def detail_for(qid, cat, q):
+    if qid in DETAILS:
+        return DETAILS[qid]
+    return (
+        "Read the short question again, then use this longer wording. "
+        "It explains the task; it does not name the answer. Full question: " + q
+    )
+
+
+UI = [
+    (
+        "[H,I]=(0,t.useState)(null),[q,P]=(0,t.useState)(!1),L=(0,t.useMemo)",
+        "[H,I]=(0,t.useState)(null),[q,P]=(0,t.useState)(!1),[_fq,_fs]=(0,t.useState)(!1),L=(0,t.useMemo)",
+    ),
+    (
+        "[M,_]=(0,t.useState)(null),[N,D]=(0,t.useState)(!1),O=(0,t.useMemo)",
+        "[M,_]=(0,t.useState)(null),[N,D]=(0,t.useState)(!1),[_fq,_fs]=(0,t.useState)(!1),O=(0,t.useMemo)",
+    ),
+    (
+        "[et,ot]=(0,e.useState)(!1),[rt,nt]=(0,e.useState)(null)",
+        "[et,ot]=(0,e.useState)(!1),[rt,nt]=(0,e.useState)(null),[_fq,_fs]=(0,e.useState)(!1)",
+    ),
+    ("I(null),P(!1)", "I(null),P(!1),_fs(!1)"),
+    ("_(null),D(!1)", "_(null),D(!1),_fs(!1)"),
+    (
+        "ot(!1),L+1>=W.length?st():$(t=>t+1)",
+        "ot(!1),_fs(!1),L+1>=W.length?st():$(t=>t+1)",
+    ),
+    (
+        '[(0,b.jsx)(n.default,{style:y.qText,children:V.question}),(0,b.jsx)(n.default,{style:y.qDetail,children:V.detail||""}),(0,b.jsx)(i.default,{style:y.detailBtn,onPress:function(){},children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:"Click to view full question"})})]',
+        '[(0,b.jsx)(n.default,{style:y.qText,children:V.question}),(0,b.jsx)(i.default,{style:y.detailBtn,onPress:()=>_fs(t=>!t),children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:_fq?"Hide full question":"Click to view full question"})}),_fq&&V.detail?(0,b.jsx)(n.default,{style:y.qDetail,children:V.detail}):null]',
+    ),
+    (
+        '[(0,b.jsx)(n.default,{style:y.qText,children:$.question}),(0,b.jsx)(n.default,{style:y.qDetail,children:$.detail||""}),(0,b.jsx)(i.default,{style:y.detailBtn,onPress:function(){},children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:"Click to view full question"})})]',
+        '[(0,b.jsx)(n.default,{style:y.qText,children:$.question}),(0,b.jsx)(i.default,{style:y.detailBtn,onPress:()=>_fs(t=>!t),children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:_fq?"Hide full question":"Click to view full question"})}),_fq&&$.detail?(0,b.jsx)(n.default,{style:y.qDetail,children:$.detail}):null]',
+    ),
+    (
+        'it.detail?(0,C.jsxs)(c.default,{children:[(0,C.jsx)(l.default,{style:b.note,children:it.detail}),(0,C.jsx)(i.default,{onPress:function(){},children:(0,C.jsx)(l.default,{style:b.note,children:"Click to view full question"})})]}):null',
+        'it.detail?(0,C.jsxs)(c.default,{children:[(0,C.jsx)(i.default,{onPress:()=>_fs(t=>!t),children:(0,C.jsx)(l.default,{style:b.note,children:_fq?"Hide full question":"Click to view full question"})}),_fq?(0,C.jsx)(l.default,{style:b.note,children:it.detail}):null]}):null',
+    ),
+]
+
+QRE = re.compile(
+    r'\{id:"([^"]+)",category:"([^"]+)",question:"((?:\\.|[^"\\])+)",(?:detail:"(?:\\.|[^"\\])*",)?choices:\[((?:\\.|[^\[\]])*)\],correctIndex:(\d+)'
+)
+
+
+def patch(src):
+    out = src
+    for old, new in UI:
+        n = out.count(old)
+        print(("OK" if n else "WARN"), n, old[:72])
+        if n and old != new:
+            out = out.replace(old, new)
+    inj = [0]
+    spec = [0]
+
+    def repl(m):
+        qid, cat, qraw, ch, idx = m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)
+        d = detail_for(qid, cat, dec(qraw))
+        inj[0] += 1
+        if qid in DETAILS:
+            spec[0] += 1
+        return '{id:"%s",category:"%s",question:"%s",detail:"%s",choices:[%s],correctIndex:%s' % (
+            qid,
+            cat,
+            qraw,
+            js_esc(d),
+            ch,
+            idx,
+        )
+
+    out = QRE.sub(repl, out)
+    print("details", inj[0], "from_map", spec[0])
+    return out
+
+
+def main():
+    if "DETAILS" not in globals():
+        print("DETAILS dict missing — concat details_0.py .. details_3.py first")
+        return 2
+    if len(sys.argv) < 3:
+        print("usage: patch-question-details.py IN.js OUT.js")
+        return 2
+    src, dst = Path(sys.argv[1]), Path(sys.argv[2])
+    dst.write_text(patch(src.read_text(encoding="utf-8", errors="ignore")), encoding="utf-8")
+    print("wrote", dst, dst.stat().st_size)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
