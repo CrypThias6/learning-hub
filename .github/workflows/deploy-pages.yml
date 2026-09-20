@@ -31,12 +31,13 @@ jobs:
             if [ -f "$single" ]; then
               base64 -d "$single" | gzip -d > "$out"
             else
-              # Assemble from .s0/.s1 full shards and/or zero-padded offset pieces
               local parts=()
-              [ -f "assets/data/${prefix}.s0" ] && parts+=("assets/data/${prefix}.s0")
-              [ -f "assets/data/${prefix}.s1" ] && parts+=("assets/data/${prefix}.s1")
-              # Numeric offset pieces e.g. prefix.004000 (sorted)
-              while IFS= read -r f; do parts+=("$f"); done < <(ls assets/data/${prefix}.[0-9]* 2>/dev/null | sort || true)
+              # Prefer .s* shards (s0, s1, s2, ...) version-sorted
+              while IFS= read -r f; do parts+=("$f"); done < <(ls assets/data/${prefix}.s* 2>/dev/null | sort -V || true)
+              if [ ${#parts[@]} -eq 0 ]; then
+                # Numeric offset pieces e.g. prefix.004000
+                while IFS= read -r f; do parts+=("$f"); done < <(ls assets/data/${prefix}.[0-9]* 2>/dev/null | sort || true)
+              fi
               if [ ${#parts[@]} -gt 0 ]; then
                 cat "${parts[@]}" | base64 -d | gzip -d > "$out"
               elif [ -f "$man" ]; then
