@@ -8,6 +8,7 @@ export const CONTINENT_ORDER = [
   'europe',
   'north_america',
   'south_america',
+  'custom',
 ] as const;
 
 export const SECTION_BOUNDS: Record<
@@ -49,6 +50,12 @@ export const SECTION_BOUNDS: Record<
   sa_brazil_guianas: { latitude: -8, longitude: -50, latitudeDelta: 35, longitudeDelta: 30 },
   sa_south_cone: { latitude: -35, longitude: -62, latitudeDelta: 30, longitudeDelta: 25 },
   world: { latitude: 10, longitude: 20, latitudeDelta: 120, longitudeDelta: 160 },
+  custom: { latitude: 10, longitude: 20, latitudeDelta: 120, longitudeDelta: 160 },
+  custom_pop50: { latitude: 10, longitude: 20, latitudeDelta: 120, longitudeDelta: 160 },
+  custom_area50: { latitude: 10, longitude: 20, latitudeDelta: 120, longitudeDelta: 160 },
+  custom_small50: { latitude: 10, longitude: 20, latitudeDelta: 120, longitudeDelta: 160 },
+  custom_islands: { latitude: 10, longitude: 20, latitudeDelta: 120, longitudeDelta: 160 },
+  custom_landlocked: { latitude: 10, longitude: 20, latitudeDelta: 120, longitudeDelta: 160 },
 };
 
 export const DEFAULT_SETTINGS: Settings = {
