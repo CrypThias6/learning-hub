@@ -114,7 +114,7 @@ export default function App() {
               <Text style={styles.choiceText}>Start quiz</Text>
             </Pressable>
           </View>
-        ) : !finished ? (
+        ) : !finished && current ? (
           <View style={styles.quiz}>
             <Text style={styles.progress}>
               {index + 1}/{QUESTIONS.length} • Score {score}
@@ -125,6 +125,10 @@ export default function App() {
                 <Text style={styles.choiceText}>{c}</Text>
               </Pressable>
             ))}
+          </View>
+        ) : !finished ? (
+          <View style={styles.quiz}>
+            <Text style={styles.question}>No active question.</Text>
           </View>
         ) : (
           <View style={styles.quiz}>
