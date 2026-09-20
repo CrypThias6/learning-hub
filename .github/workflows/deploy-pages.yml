@@ -26,12 +26,20 @@ jobs:
           mkdir -p assets/data
           restore_gz() {
             local prefix="$1" out="$2"
+            local single="assets/data/${prefix}"
             local man="assets/data/${prefix}.manifest"
-            if [ -f "$man" ]; then
+            if [ -f "$single" ]; then
+              base64 -d "$single" | gzip -d > "$out"
+            elif ls "assets/data/${prefix}.s"* >/dev/null 2>&1; then
+              cat "assets/data/${prefix}.s"* | base64 -d | gzip -d > "$out"
+            elif [ -f "$man" ]; then
               parts=$(tr '\n' ' ' < "$man")
               (cd assets/data && cat $parts) | base64 -d | gzip -d > "$out"
-              echo "Restored $out ($(wc -c < "$out") bytes)"
+            else
+              echo "Missing asset data for $prefix" >&2
+              exit 1
             fi
+            echo "Restored $out ($(wc -c < "$out") bytes)"
           }
           restore_gz world_geo_game.json.gz.b64 assets/data/world_geo_game.json
           restore_gz horse_quiz.json.gz.b64 assets/data/horse_quiz.json
@@ -76,10 +84,8 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Clone gh-pages into a sibling dir and replace contents with dist
           WORK=$(mktemp -d)
           git clone --depth 1 --branch gh-pages "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$WORK"
-          # Remove old site files but keep .git
           find "$WORK" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
           cp -a dist/. "$WORK"/
           touch "$WORK/.nojekyll"
