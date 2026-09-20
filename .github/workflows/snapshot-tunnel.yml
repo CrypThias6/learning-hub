@@ -1,0 +1,49 @@
+name: Snapshot tunnel build to Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: snapshot-pages
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Download the working Cloudflare build
+        run: |
+          set -euo pipefail
+          BASE="https://maximum-tracks-letting-shut.trycloudflare.com/learning-hub"
+          JS="_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js"
+          mkdir -p _expo/static/js/web
+          curl -fsSL "$BASE/" -o index.html
+          curl -fsSL "$BASE/$JS" -o "$JS"
+          curl -fsSL "$BASE/metadata.json" -o metadata.json || true
+          test -s "$JS"
+          test -s index.html
+          ls -lh index.html "$JS"
+          # Keep a copy as 404 so refresh on nested paths still works
+          cp index.html 404.html
+          touch .nojekyll
+
+      - name: Commit and push to gh-pages
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "Snapshot working Cloudflare Learning Hub build"
+          git push origin gh-pages
