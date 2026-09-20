@@ -27,21 +27,7 @@ jobs:
           python3 /tmp/patch-question-details.py \
             _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js \
             _expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js
-          python3 - <<'PY'
-from pathlib import Path
-p=Path('index.html')
-t=p.read_text()
-t=t.replace(
-  '/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js"',
-  '/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js?v=details5"'
-)
-t=t.replace(
-  '/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js?v=details5"',
-  '/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js?v=details5"'
-)
-p.write_text(t)
-print('index cache-bust ok')
-PY
+          sed -i 's|index-e692932e42ea2ff98944c1bb62b893a7.js[^"]*|index-e692932e42ea2ff98944c1bb62b893a7.js?v=details5|' index.html
 
       - name: Commit and push
         run: |
