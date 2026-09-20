@@ -9,74 +9,43 @@ def dec(t):
         return t
 
 def detail_for(qid, cat, q):
+    if qid in DETAILS:
+        return DETAILS[qid]
     if qid in SPEC:
         return SPEC[qid]
-    ql = q.lower()
-    if "stand for" in ql:
-        return "This is an acronym. Expand every official letter. Full question: " + q
-    if "how many" in ql:
-        return "This needs the official number, not a nearby look-alike. Full question: " + q
-    if "worth" in ql and any(w in ql for w in ("point", "score", "try", "goal", "bullseye")):
-        return "This asks for the official point value. Full question: " + q
-    if ql.startswith("where ") or "located" in ql or "found in" in ql:
-        return "Picture the place on the body, map, or gear. Full question: " + q
-    if "capital" in ql:
-        return "Name the official capital city. Full question: " + q
-    if "largest city" in ql:
-        return "This asks for the biggest city by people. Full question: " + q
-    if "watl" in ql:
-        return "Use WATL rules, not IATF. Full question: " + q
-    if "iatf" in ql:
-        return "Use IATF rules, not WATL. Full question: " + q
-    if "nzac" in ql:
-        return "Use NZAC counselling rules in Aotearoa New Zealand. Full question: " + q
-    if "te tiriti" in ql or "treaty" in ql:
-        return "This is about Te Tiriti o Waitangi in helping work. Full question: " + q
-    if "gvm" in ql:
-        return "GVM is the maximum loaded weight on that vehicle plate. Full question: " + q
-    if "istanbul" in ql:
-        return "Istanbul is the huge Bosporus city, not the inland capital. Full question: " + q
-    if "massey" in ql or "pgdip" in ql:
-        return "This is about Massey counselling study and NZQF level. Full question: " + q
-    if "supervision" in ql:
-        return "Supervision keeps counselling practice safe and skilful. Full question: " + q
-    if "confidentiality" in ql:
-        return "Confidentiality is the usual rule, with safety limits. Full question: " + q
-    if "colic" in ql:
-        return "Colic means horse belly pain and can be an emergency. Full question: " + q
     hint = CAT.get(cat, "This extra line explains the question. It does not give the answer.")
     return hint + " Full question: " + q
 
 UI = [
     (
-        "[H,I]=(0,t.useState)(null),[q,P]=(0,t.useState)(!1),[G,K]=(0,t.useState)(!1)",
         "[H,I]=(0,t.useState)(null),[q,P]=(0,t.useState)(!1)",
+        "[H,I]=(0,t.useState)(null),[q,P]=(0,t.useState)(!1),[_fq,_fs]=(0,t.useState)(!1)",
     ),
     (
-        "[M,_]=(0,t.useState)(null),[N,D]=(0,t.useState)(!1),[G,K]=(0,t.useState)(!1)",
         "[M,_]=(0,t.useState)(null),[N,D]=(0,t.useState)(!1)",
+        "[M,_]=(0,t.useState)(null),[N,D]=(0,t.useState)(!1),[_fq,_fs]=(0,t.useState)(!1)",
     ),
-    ("I(null),P(!1),K(!1)", "I(null),P(!1)"),
-    ("_(null),D(!1),K(!1)", "_(null),D(!1)"),
+    ("I(null),P(!1)", "I(null),P(!1),_fs(!1)"),
+    ("_(null),D(!1)", "_(null),D(!1),_fs(!1)"),
     (
-        "[rt,nt]=(0,e.useState)(null),[pt,ht]=(0,e.useState)(!1)",
         "[rt,nt]=(0,e.useState)(null)",
+        "[rt,nt]=(0,e.useState)(null),[_fq,_fs]=(0,e.useState)(!1)",
     ),
     (
-        "ot(!1),ht(!1),L+1>=W.length?st():$(t=>t+1)",
         "ot(!1),L+1>=W.length?st():$(t=>t+1)",
+        "ot(!1),_fs(!1),L+1>=W.length?st():$(t=>t+1)",
     ),
     (
-        '[(0,b.jsx)(n.default,{style:y.qText,children:V.question}),V.detail?(0,b.jsxs)(c.default,{style:y.detailWrap,children:[(0,b.jsx)(i.default,{style:y.detailBtn,onPress:()=>K(t=>!t),children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:G?"Hide full question":"Click to view full question"})}),G?(0,b.jsx)(n.default,{style:y.qDetail,children:V.detail}):null]}):null]',
         '[(0,b.jsx)(n.default,{style:y.qText,children:V.question}),(0,b.jsx)(n.default,{style:y.qDetail,children:V.detail||""}),(0,b.jsx)(i.default,{style:y.detailBtn,onPress:function(){},children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:"Click to view full question"})})]',
+        '[(0,b.jsx)(n.default,{style:y.qText,children:V.question}),(0,b.jsx)(i.default,{style:y.detailBtn,onPress:()=>_fs(t=>!t),children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:_fq?"Hide full question":"Click to view full question"})}),_fq&&V.detail?(0,b.jsx)(n.default,{style:y.qDetail,children:V.detail}):null]',
     ),
     (
-        '[(0,b.jsx)(n.default,{style:y.qText,children:$.question}),$.detail?(0,b.jsxs)(c.default,{style:y.detailWrap,children:[(0,b.jsx)(i.default,{style:y.detailBtn,onPress:()=>K(t=>!t),children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:G?"Hide full question":"Click to view full question"})}),G?(0,b.jsx)(n.default,{style:y.qDetail,children:$.detail}):null]}):null]',
         '[(0,b.jsx)(n.default,{style:y.qText,children:$.question}),(0,b.jsx)(n.default,{style:y.qDetail,children:$.detail||""}),(0,b.jsx)(i.default,{style:y.detailBtn,onPress:function(){},children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:"Click to view full question"})})]',
+        '[(0,b.jsx)(n.default,{style:y.qText,children:$.question}),(0,b.jsx)(i.default,{style:y.detailBtn,onPress:()=>_fs(t=>!t),children:(0,b.jsx)(n.default,{style:y.detailBtnText,children:_fq?"Hide full question":"Click to view full question"})}),_fq&&$.detail?(0,b.jsx)(n.default,{style:y.qDetail,children:$.detail}):null]',
     ),
     (
-        'it.detail?(0,C.jsxs)(c.default,{children:[(0,C.jsx)(i.default,{onPress:()=>ht(t=>!t),children:(0,C.jsx)(l.default,{style:b.note,children:pt?"Hide full question":"Click to view full question"})}),pt?(0,C.jsx)(l.default,{style:b.note,children:it.detail}):null]}):null',
         'it.detail?(0,C.jsxs)(c.default,{children:[(0,C.jsx)(l.default,{style:b.note,children:it.detail}),(0,C.jsx)(i.default,{onPress:function(){},children:(0,C.jsx)(l.default,{style:b.note,children:"Click to view full question"})})]}):null',
+        'it.detail?(0,C.jsxs)(c.default,{children:[(0,C.jsx)(i.default,{onPress:()=>_fs(t=>!t),children:(0,C.jsx)(l.default,{style:b.note,children:_fq?"Hide full question":"Click to view full question"})}),_fq?(0,C.jsx)(l.default,{style:b.note,children:it.detail}):null]}):null',
     ),
 ]
 
