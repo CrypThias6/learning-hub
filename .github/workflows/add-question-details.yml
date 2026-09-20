@@ -17,8 +17,10 @@ jobs:
 
       - name: Fetch patch script from main
         run: |
-          curl -fsSL -o /tmp/patch-question-details.py \
-            https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts/patch-question-details.py
+          curl -fsSL -o /tmp/p1.py https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts/patch-question-details.py
+          curl -fsSL -o /tmp/p2.py https://raw.githubusercontent.com/CrypThias6/learning-hub/main/scripts/patch_ui.py
+          cat /tmp/p1.py /tmp/p2.py > /tmp/patch-question-details.py
+          python3 -m py_compile /tmp/patch-question-details.py
 
       - name: Patch the live JS bundle
         run: |
