@@ -13,16 +13,19 @@ const QUESTIONS: Question[] = [
   { country: 'Canada', correct: 'Ottawa', choices: ['Toronto', 'Ottawa', 'Vancouver', 'Montreal'] },
 ];
 
+const DEFAULT_PROFILES: Profile[] = [
+  { id: 'p1', name: 'Player 1', best: 0, plays: 0 },
+  { id: 'p2', name: 'Player 2', best: 0, plays: 0 },
+];
+
 export default function App() {
-  const [profiles, setProfiles] = useState<Profile[]>([
-    { id: 'p1', name: 'Player 1', best: 0, plays: 0 },
-    { id: 'p2', name: 'Player 2', best: 0, plays: 0 },
-  ]);
+  const [profiles, setProfiles] = useState<Profile[]>(() => DEFAULT_PROFILES);
   const [profileId, setProfileId] = useState('p1');
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
+  const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
-  const gameInProgress = !finished && (index > 0 || score > 0);
+  const gameInProgress = started && !finished;
   const hasQuestions = QUESTIONS.length > 0;
 
   const current = QUESTIONS[index];
@@ -33,6 +36,7 @@ export default function App() {
 
   const answer = (choice: string) => {
     if (!hasQuestions || !current) return;
+    setStarted(true);
     const nextScore = score + (choice === current.correct ? 1 : 0);
     if (index === QUESTIONS.length - 1) {
       setScore(nextScore);
@@ -51,6 +55,7 @@ export default function App() {
   const reset = () => {
     setIndex(0);
     setScore(0);
+    setStarted(false);
     setFinished(false);
   };
 
