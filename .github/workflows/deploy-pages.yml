@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -18,43 +18,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Restore assets
+      - name: Decode PNG assets from base64 (if present)
         run: |
           set -euo pipefail
-          mkdir -p assets/data
-          restore_gz() {
-            local prefix="$1" out="$2"
-            local single="assets/data/${prefix}"
-            local man="assets/data/${prefix}.manifest"
-            if [ -f "$single" ]; then
-              base64 -d "$single" | gzip -d > "$out"
-            else
-              local parts=()
-              # Prefer .s* shards (s0, s1, s2, ...) version-sorted
-              while IFS= read -r f; do parts+=("$f"); done < <(ls assets/data/${prefix}.s* 2>/dev/null | sort -V || true)
-              if [ ${#parts[@]} -eq 0 ]; then
-                # Numeric offset pieces e.g. prefix.004000
-                while IFS= read -r f; do parts+=("$f"); done < <(ls assets/data/${prefix}.[0-9]* 2>/dev/null | sort || true)
-              fi
-              if [ ${#parts[@]} -gt 0 ]; then
-                cat "${parts[@]}" | base64 -d | gzip -d > "$out"
-              elif [ -f "$man" ]; then
-                local mp
-                mp=$(tr '\n' ' ' < "$man")
-                (cd assets/data && cat $mp) | base64 -d | gzip -d > "$out"
-              else
-                echo "Missing asset data for $prefix" >&2
-                exit 1
-              fi
+          shopt -s nullglob
+          for b64 in assets/*.png.b64; do
+            out="${b64%.b64}"
+            if [ ! -f "$out" ]; then
+              base64 -d "$b64" > "$out"
+              echo "Decoded $b64 -> $out"
             fi
-            echo "Restored $out ($(wc -c < "$out") bytes)"
-          }
-          restore_gz world_geo_game.json.gz.b64 assets/data/world_geo_game.json
-          restore_gz horse_quiz.json.gz.b64 assets/data/horse_quiz.json
-          if [ -f assets/favicon.png.b64 ]; then base64 -d assets/favicon.png.b64 > assets/favicon.png; fi
-          python3 << 'PY2'
+          done
+          python3 << 'PY'
           import struct, zlib, pathlib
           def write_png(path, rgba=(11,18,32,255), size=48):
               path = pathlib.Path(path)
@@ -68,47 +46,32 @@ jobs:
               ihdr = struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)
               png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
               path.write_bytes(png)
-              print("Generated", path)
+              print(f"Generated placeholder {path}")
           for name in ["icon.png", "splash-icon.png", "favicon.png",
                        "android-icon-foreground.png", "android-icon-background.png",
                        "android-icon-monochrome.png"]:
               write_png(f"assets/{name}")
-          PY2
+          PY
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
+          cache: npm
 
-      - run: npm install --no-fund --no-audit
+      - name: Install dependencies
+        run: npm ci
 
-      - run: npx expo export -p web --output-dir dist
+      - name: Export web build
+        run: npx expo export -p web --output-dir dist
 
-      - run: touch dist/.nojekyll
+      - name: Add .nojekyll
+        run: touch dist/.nojekyll
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-
-      - name: Publish dist to gh-pages branch
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          WORK=$(mktemp -d)
-          git clone --depth 1 --branch gh-pages "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$WORK"
-          find "$WORK" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-          cp -a dist/. "$WORK"/
-          touch "$WORK/.nojekyll"
-          cd "$WORK"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No changes to publish to gh-pages"
-          else
-            git commit -m "Deploy expo web export from main ${GITHUB_SHA}"
-            git push origin gh-pages
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     needs: build
@@ -117,5 +80,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
