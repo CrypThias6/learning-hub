@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { colors } from './src/constants/theme';
 
@@ -25,6 +25,7 @@ export default function App() {
   const [score, setScore] = useState(0);
   const [inRound, setInRound] = useState(false);
   const [finished, setFinished] = useState(false);
+  const answerLockedRef = useRef(false);
   const gameInProgress = inRound && !finished;
   const hasQuestions = QUESTIONS.length > 0;
 
@@ -34,8 +35,13 @@ export default function App() {
     [profiles]
   );
 
+  useEffect(() => {
+    answerLockedRef.current = false;
+  }, [index, inRound]);
+
   const answer = (choice: string) => {
-    if (!hasQuestions || !current) return;
+    if (!hasQuestions || !current || answerLockedRef.current) return;
+    answerLockedRef.current = true;
     const nextScore = score + (choice === current.correct ? 1 : 0);
     if (index === QUESTIONS.length - 1) {
       setScore(nextScore);
@@ -57,6 +63,7 @@ export default function App() {
     setScore(0);
     setInRound(false);
     setFinished(false);
+    answerLockedRef.current = false;
   };
 
   const startRound = () => {
@@ -64,13 +71,16 @@ export default function App() {
     setScore(0);
     setFinished(false);
     setInRound(true);
+    answerLockedRef.current = false;
   };
 
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
       <View style={styles.panel}>
-        <Text style={styles.title}>World Geo Game</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          World Geo Game
+        </Text>
         <Text style={styles.subtitle}>Profiles + Leaderboard enabled</Text>
 
         <View style={styles.row}>
