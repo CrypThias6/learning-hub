@@ -8,6 +8,7 @@
   var wake = null;
   var banner = null;
   var lastQuestion = '';
+  var armed = false;
 
   function wait(ms) {
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
@@ -19,7 +20,10 @@
 
   function isMumPage() {
     var t = pageText();
-    return t.indexOf('Counselling & Guidance') !== -1 || t.indexOf('Counselling \u00b7') !== -1;
+    if (/Who are you\?/.test(t)) armed = false;
+    if (/Mum \u00b7 Counselling/.test(t) || t.indexOf('Counselling & Guidance') !== -1 || t.indexOf('Counselling \u00b7') !== -1) armed = true;
+    if (/(Matt|Lyla|Ken) \u00b7/.test(t) && t.indexOf('Mum \u00b7') === -1 && t.indexOf('Counselling') === -1) armed = false;
+    return armed || t.indexOf('Counselling & Guidance') !== -1;
   }
 
   function isQuizScreen() {
