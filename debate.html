@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B1220" />
+  <title>Debate</title>
+  <style>
+    :root { --bg:#0B1220; --card:#152238; --line:#3D5A80; --text:#E8F0FA; --muted:#9BB0C9; --accent:#5B9CF5; --good:#3DB8A8; --warn:#C77DFF; --hot:#E07A5F; }
+    * { box-sizing:border-box; }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui,sans-serif; min-height:100%; }
+    body { max-width:640px; margin:0 auto; padding:18px 16px 36px; }
+    a.back { color:var(--muted); text-decoration:none; font-weight:700; font-size:14px; }
+    h1 { margin:10px 0 6px; font-size:28px; letter-spacing:-.03em; }
+    h2 { margin:0 0 8px; font-size:22px; }
+    p.lead { color:var(--muted); margin:0 0 18px; }
+    .card, button.choice { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; color:inherit; text-align:left; width:100%; font:inherit; }
+    button.choice h3, .card h3 { margin:0 0 4px; font-size:18px; }
+    button.choice p, .card p { margin:0; color:var(--muted); font-size:14px; }
+    button.choice.on { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+    .btn { width:100%; border:0; border-radius:14px; padding:14px; font-weight:800; font-size:16px; margin-top:10px; }
+    .go { background:var(--good); color:#06201C; }
+    .alt { background:#C77DFF; color:#1b0b28; }
+    .ghost { background:#22334d; color:#d6e4f5; }
+    .hot { background:var(--hot); color:#2a1008; }
+    .levels { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .levels button { padding:12px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--text); font-weight:800; }
+    .levels button.on { border-color:var(--warn); background:#2a1a3a; }
+    .timer { font-size:72px; font-weight:800; text-align:center; letter-spacing:-.04em; margin:12px 0; }
+    .who { text-align:center; font-size:20px; font-weight:800; }
+    .muted { color:var(--muted); font-size:14px; }
+    .log { background:#0E1730; border:1px solid var(--line); border-radius:14px; padding:12px; min-height:80px; white-space:pre-wrap; }
+    .chat { display:flex; flex-direction:column; gap:10px; margin:12px 0; }
+    .bubble { border-radius:14px; padding:12px 14px; max-width:92%; }
+    .me { align-self:flex-end; background:#1d3b66; }
+    .bot { align-self:flex-start; background:var(--card); border:1px solid var(--line); }
+    textarea { width:100%; background:#0E1730; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:12px; font:inherit; }
+    .score { display:grid; grid-template-columns:1fr auto; gap:6px 12px; margin:12px 0; }
+    .warn { color:#ffb4a8; }
+    .bar { height:8px; background:#22334d; border-radius:99px; overflow:hidden; margin:8px 0 16px; }
+    .bar > span { display:block; height:100%; background:var(--good); width:0; }
+  </style>
+</head>
+<body>
+  <a class="back" href="/learning-hub/">← Projects</a>
+  <div id="app"></div>
+  <script src="/learning-hub/debate.js?v=1"></script>
+</body>
+</html>
