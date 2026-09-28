@@ -1,236 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0B1220" />
-    <title>World Geo Game</title>
-    <style>
-      :root { --app-bg: #0B1220; }
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        min-height: 100%;
-        background: var(--app-bg);
-        overflow-x: hidden;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        touch-action: pan-y;
-      }
-      #root {
-        width: 100%;
-        min-height: 100vh;
-        min-height: 100dvh;
-        background: var(--app-bg);
-        overflow: visible;
-      }
-      #root, #root * {
-        touch-action: pan-y !important;
-      }
-      #dev-root {
-        position: fixed;
-        right: 12px;
-        bottom: 12px;
-        left: auto;
-        top: auto;
-        width: auto;
-        height: auto;
-        pointer-events: none;
-        z-index: 2147483646;
-      }
-      #dev-open, #dev-lock, #dev-panel { pointer-events: auto; }
-      #dev-open {
-        position: static;
-        background: #22334d; color: #d6e4f5; border: 1px solid #5B9CF5;
-        border-radius: 999px; padding: 10px 14px; font: 700 13px system-ui, sans-serif;
-      }
-      #dev-lock, #dev-panel {
-        display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-        width: min(92vw, 360px); background: #152238; color: #fff;
-        border: 1px solid #3D5A80; border-radius: 16px; padding: 16px; font-family: system-ui, sans-serif;
-      }
-      #dev-lock h2, #dev-panel h2 { margin: 0 0 8px; font-size: 18px; }
-      #dev-lock p, #dev-panel p { margin: 0 0 12px; color: #9bb0c9; font-size: 13px; line-height: 1.4; }
-      #dev-code {
-        width: 100%; box-sizing: border-box; margin: 0 0 10px; padding: 12px;
-        border-radius: 10px; border: 1px solid #3D5A80; background: #0B1220; color: #fff;
-        font-size: 18px; letter-spacing: 4px; text-align: center;
-      }
-      #dev-lock button, #dev-panel button {
-        width: 100%; margin: 0 0 8px; padding: 12px; border-radius: 10px; border: 0; font-weight: 700;
-      }
-      #dev-unlock { background: #3DB8A8; color: #06201C; }
-      #dev-reset-person { background: #c44; color: #fff; }
-      #dev-reset-progress { background: #b45309; color: #fff; }
-      #dev-close, #dev-cancel { background: #22334d; color: #d6e4f5; }
-      #dev-error { color: #ff8a8a; min-height: 18px; margin: 0 0 8px; font-size: 13px; }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <div id="dev-root">
-      <button id="dev-open" type="button">Dev settings</button>
-      <div id="dev-lock">
-        <h2>Dev settings</h2>
-        <p>Enter the passcode to continue.</p>
-        <input id="dev-code" type="password" inputmode="numeric" maxlength="8" autocomplete="off" />
-        <p id="dev-error"></p>
-        <button id="dev-unlock" type="button">Open</button>
-        <button id="dev-cancel" type="button">Cancel</button>
-      </div>
-      <div id="dev-panel">
-        <h2>Dev settings</h2>
-        <p>These only change this phone or browser.</p>
-        <button id="dev-reset-person" type="button">Reset person</button>
-        <button id="dev-reset-progress" type="button">Reset progress</button>
-        <button id="dev-close" type="button">Close</button>
-      </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B1220" />
+  <title>Family Projects</title>
+  <style>
+    :root { --bg:#0B1220; --card:#152238; --line:#3D5A80; --text:#E8F0FA; --muted:#9BB0C9; --accent:#5B9CF5; --good:#3DB8A8; --warn:#C77DFF; }
+    * { box-sizing: border-box; }
+    html, body { margin:0; padding:0; min-height:100%; background:var(--bg); color:var(--text); font: 16px/1.45 system-ui, sans-serif; }
+    body { padding: 24px 18px 40px; max-width: 560px; margin: 0 auto; }
+    header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom: 22px; }
+    h1 { margin:0; font-size: 28px; letter-spacing:-.03em; }
+    .sub { color:var(--muted); margin:6px 0 0; font-size:14px; }
+    .icon-btn { background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-weight:700; }
+    .grid { display:grid; gap:14px; }
+    .card { display:block; text-decoration:none; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px 16px; }
+    .card h2 { margin:0 0 6px; font-size:20px; }
+    .card p { margin:0; color:var(--muted); font-size:14px; }
+    .tag { display:inline-block; margin-top:10px; font-size:12px; font-weight:700; color:#0B1220; background:var(--accent); border-radius:999px; padding:4px 8px; }
+    .tag.alt { background:var(--warn); }
+    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:18px; }
+    .overlay.on { display:flex; }
+    .sheet { width:min(92vw, 380px); background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px; }
+    .sheet h3 { margin:0 0 8px; }
+    .sheet p { margin:0 0 12px; color:var(--muted); font-size:14px; }
+    input { width:100%; padding:12px; border-radius:10px; border:1px solid var(--line); background:#0B1220; color:#fff; font-size:16px; margin:0 0 10px; }
+    button.full { width:100%; margin:0 0 8px; padding:12px; border:0; border-radius:12px; font-weight:800; }
+    .go { background:var(--good); color:#06201C; }
+    .danger { background:#c44; color:#fff; }
+    .ghost { background:#22334d; color:#d6e4f5; }
+    .err { color:#ff8a8a; min-height:18px; font-size:13px; }
+    .ok { color:var(--good); font-size:13px; margin:0 0 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Family Projects</h1>
+      <p class="sub">Pick something to play on this phone.</p>
     </div>
-    <script>
-      (function () {
-        var PASS = '247';
-        var KEYS = {
-          family: '@wgg/selectedFamily',
-          settings: '@wgg/settings',
-          profiles: '@wgg/profiles',
-          leaderboard: '@wgg/leaderboard',
-          runs: '@wgg/competitionRuns'
-        };
-        var lock = document.getElementById('dev-lock');
-        var panel = document.getElementById('dev-panel');
-        var code = document.getElementById('dev-code');
-        var err = document.getElementById('dev-error');
-        var root = document.getElementById('dev-root');
-        function hideAll() {
-          lock.style.display = 'none';
-          panel.style.display = 'none';
-          code.value = '';
-          err.textContent = '';
-        }
-        function read(key) {
-          try { return localStorage.getItem(key); } catch (e) { return null; }
-        }
-        function write(key, value) {
-          try { localStorage.setItem(key, value); } catch (e) {}
-        }
-        function remove(key) {
-          try {
-            localStorage.removeItem(key);
-            sessionStorage.removeItem(key);
-          } catch (e) {}
-        }
-        function parse(raw, fallback) {
-          if (!raw) return fallback;
-          try { return JSON.parse(raw); } catch (e) { return fallback; }
-        }
-        function currentPerson() {
-          var id = read(KEYS.family);
-          if (id === 'matt' || id === 'lyla' || id === 'ken' || id === 'mum') return id;
-          var settings = parse(read(KEYS.settings), {});
-          var fromSettings = settings && settings.activeProfileId;
-          if (fromSettings === 'matt' || fromSettings === 'lyla' || fromSettings === 'ken' || fromSettings === 'mum') return fromSettings;
-          return null;
-        }
-        function emptyLearned() {
-          return { capitals: {}, cities: {}, facts: {}, seenCities: {} };
-        }
-        function emptyStats() {
-          return {
-            overallCorrect: 0, overallAnswered: 0,
-            capitalsCorrect: 0, capitalsAnswered: 0,
-            citiesCorrect: 0, citiesAnswered: 0,
-            factsCorrect: 0, factsAnswered: 0,
-            locateCorrect: 0, locateAnswered: 0, locateDistanceSum: 0,
-            continentStats: {}, bestStreak: 0, sectionsCompleted: [], fastestClears: {}
-          };
-        }
-        function reloadApp() {
-          var url = '/learning-hub/?dev=' + Date.now();
-          location.replace(url);
-        }
-        document.getElementById('dev-open').addEventListener('click', function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          err.textContent = '';
-          code.value = '';
-          lock.style.display = 'block';
-          panel.style.display = 'none';
-          setTimeout(function () { code.focus(); }, 50);
-        }, true);
-        document.getElementById('dev-cancel').addEventListener('click', hideAll, true);
-        document.getElementById('dev-close').addEventListener('click', hideAll, true);
-        document.getElementById('dev-unlock').addEventListener('click', function () {
-          if (String(code.value).trim() === PASS) {
-            lock.style.display = 'none';
-            panel.style.display = 'block';
-            code.value = '';
-            err.textContent = '';
-          } else {
-            err.textContent = 'Wrong passcode';
-            code.value = '';
-            code.focus();
-          }
-        }, true);
-        code.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') document.getElementById('dev-unlock').click();
-        });
-        document.getElementById('dev-reset-person').addEventListener('click', function () {
-          if (!confirm('Reset person on this device? Who are you? will show again. Scores stay.')) return;
-          remove(KEYS.family);
-          try {
-            Object.keys(localStorage).forEach(function (k) {
-              if (k.indexOf('selectedFamily') !== -1) remove(k);
-            });
-          } catch (e) {}
-          var settings = parse(read(KEYS.settings), null);
-          if (settings && typeof settings === 'object') {
-            settings.activeProfileId = '';
-            settings.profileName = '';
-            write(KEYS.settings, JSON.stringify(settings));
-          }
-          reloadApp();
-        }, true);
-        document.getElementById('dev-reset-progress').addEventListener('click', function () {
-          var person = currentPerson();
-          var label = person || 'this device';
-          if (!confirm('Reset progress for ' + label + ' on this device? Official and practice scores for that person will be cleared here.')) return;
-          if (person) {
-            var profiles = parse(read(KEYS.profiles), []);
+    <button class="icon-btn" id="open-settings" type="button">Settings</button>
+  </header>
+  <div class="grid">
+    <a class="card" href="/learning-hub/holiday.html">
+      <h2>Holiday Challenge</h2>
+      <p>Family quizzes, scores and the official graph.</p>
+      <span class="tag">Quizzes</span>
+    </a>
+    <a class="card" href="/learning-hub/debate.html">
+      <h2>Debate</h2>
+      <p>Two people at the table, or practice with an AI.</p>
+      <span class="tag alt">New</span>
+    </a>
+  </div>
+
+  <div class="overlay" id="lock">
+    <div class="sheet">
+      <h3>Settings</h3>
+      <p>Enter the passcode to open Dev tools.</p>
+      <input id="code" type="password" inputmode="numeric" maxlength="8" autocomplete="off" />
+      <p class="err" id="lock-err"></p>
+      <button class="full go" id="unlock" type="button">Open</button>
+      <button class="full ghost" id="lock-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="panel">
+    <div class="sheet">
+      <h3>Dev tools</h3>
+      <p>These stay on this phone. The API key is never uploaded to GitHub.</p>
+      <p class="ok" id="key-state">No Grok key saved.</p>
+      <input id="api-key" type="password" autocomplete="off" placeholder="Paste xAI API key" />
+      <button class="full go" id="save-key" type="button">Save key on this phone</button>
+      <button class="full ghost" id="clear-key" type="button">Remove key</button>
+      <button class="full danger" id="reset-person" type="button">Reset person</button>
+      <button class="full danger" id="reset-progress" type="button">Reset progress</button>
+      <button class="full ghost" id="panel-close" type="button">Close</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var PASS = '247';
+      var KEY = '@family/xaiKey';
+      var lock = document.getElementById('lock');
+      var panel = document.getElementById('panel');
+      var code = document.getElementById('code');
+      var err = document.getElementById('lock-err');
+      var keyInput = document.getElementById('api-key');
+      var keyState = document.getElementById('key-state');
+      function getKey() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+      function mask(k) { return k ? ('Key saved \u00b7 ends with ' + k.slice(-4)) : 'No Grok key saved.'; }
+      function showKeyState() { keyState.textContent = mask(getKey()); keyInput.value = ''; }
+      document.getElementById('open-settings').onclick = function () {
+        err.textContent = ''; code.value = ''; lock.classList.add('on'); setTimeout(function(){ code.focus(); }, 50);
+      };
+      document.getElementById('lock-cancel').onclick = function () { lock.classList.remove('on'); };
+      document.getElementById('panel-close').onclick = function () { panel.classList.remove('on'); };
+      document.getElementById('unlock').onclick = function () {
+        if (String(code.value).trim() === PASS) { lock.classList.remove('on'); panel.classList.add('on'); showKeyState(); }
+        else { err.textContent = 'Wrong passcode'; code.value=''; code.focus(); }
+      };
+      code.addEventListener('keydown', function (e) { if (e.key === 'Enter') document.getElementById('unlock').click(); });
+      document.getElementById('save-key').onclick = function () {
+        var v = String(keyInput.value || '').trim();
+        if (!v) { keyState.textContent = 'Paste a key first.'; return; }
+        try { localStorage.setItem(KEY, v); } catch (e) {}
+        showKeyState();
+      };
+      document.getElementById('clear-key').onclick = function () {
+        if (!confirm('Remove the Grok key from this phone?')) return;
+        try { localStorage.removeItem(KEY); } catch (e) {}
+        showKeyState();
+      };
+      document.getElementById('reset-person').onclick = function () {
+        if (!confirm('Reset person on this device? Who are you? will show again.')) return;
+        try { localStorage.removeItem('@wgg/selectedFamily'); } catch (e) {}
+        location.href = '/learning-hub/holiday.html';
+      };
+      document.getElementById('reset-progress').onclick = function () {
+        if (!confirm('Reset progress for this person on this device?')) return;
+        try {
+          var id = localStorage.getItem('@wgg/selectedFamily');
+          if (id) {
+            var profiles = JSON.parse(localStorage.getItem('@wgg/profiles') || '[]');
             if (Array.isArray(profiles)) {
-              profiles = profiles.map(function (p) {
-                if (!p || p.id !== person) return p;
-                return {
-                  id: p.id,
-                  name: p.name,
-                  createdAt: p.createdAt || new Date().toISOString(),
-                  learned: emptyLearned(),
-                  stats: emptyStats(),
-                  lastMode: 'capitals',
-                  lastSectionId: 'oceania'
-                };
-              });
-              write(KEYS.profiles, JSON.stringify(profiles));
-            }
-            var board = parse(read(KEYS.leaderboard), []);
-            if (Array.isArray(board)) {
-              write(KEYS.leaderboard, JSON.stringify(board.filter(function (row) {
-                return row && row.profileId !== person;
+              localStorage.setItem('@wgg/profiles', JSON.stringify(profiles.map(function (p) {
+                if (!p || p.id !== id) return p;
+                return { id: p.id, name: p.name, createdAt: p.createdAt || new Date().toISOString(), learned: {capitals:{},cities:{},facts:{},seenCities:{}}, stats: {overallCorrect:0,overallAnswered:0,capitalsCorrect:0,capitalsAnswered:0,citiesCorrect:0,citiesAnswered:0,factsCorrect:0,factsAnswered:0,locateCorrect:0,locateAnswered:0,locateDistanceSum:0,continentStats:{},bestStreak:0,sectionsCompleted:[],fastestClears:{}}, lastMode:'capitals', lastSectionId:'oceania' };
               })));
             }
-            var runs = parse(read(KEYS.runs), []);
-            if (Array.isArray(runs)) {
-              write(KEYS.runs, JSON.stringify(runs.filter(function (row) {
-                return row && row.profileId !== person;
-              })));
-            }
+            var board = JSON.parse(localStorage.getItem('@wgg/leaderboard') || '[]');
+            if (Array.isArray(board)) localStorage.setItem('@wgg/leaderboard', JSON.stringify(board.filter(function(r){ return r && r.profileId !== id; })));
+            var runs = JSON.parse(localStorage.getItem('@wgg/competitionRuns') || '[]');
+            if (Array.isArray(runs)) localStorage.setItem('@wgg/competitionRuns', JSON.stringify(runs.filter(function(r){ return r && r.profileId !== id; })));
           }
-          reloadApp();
-        }, true);
-        document.body.appendChild(root);
-      })();
-    </script>
-    <script src="/learning-hub/_expo/static/js/web/mum-voice.js?v=voice4"></script>
-    <script src="/learning-hub/_expo/static/js/web/index-e692932e42ea2ff98944c1bb62b893a7.js?v=voice4" defer></script>
-  </body>
+        } catch (e) {}
+        location.href = '/learning-hub/holiday.html';
+      };
+    })();
+  </script>
+</body>
 </html>
